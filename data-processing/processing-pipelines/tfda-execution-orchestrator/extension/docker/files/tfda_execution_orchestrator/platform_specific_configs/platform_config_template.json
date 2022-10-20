@@ -49,6 +49,8 @@
       },
       "platform_flavors": {
         "flavor_1": {
+          "baremetal_hostname": "",
+          "baremetal_user": "",
           "offline_image_source": "",
           "selinux_enabled_os": "",
           "base_image_name": "",
@@ -64,6 +66,7 @@
           "vm_root_pass": "",
           "ssh_key_path": "",
           "ssh_key_name": "",
+          "vault_text_file": "",
           "cleanup_download": "",
           "cleanup_libvirt": ""
         }

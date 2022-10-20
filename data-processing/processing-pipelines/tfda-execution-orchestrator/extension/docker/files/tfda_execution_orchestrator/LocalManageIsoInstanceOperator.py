@@ -22,7 +22,7 @@ class LocalManageIsoInstanceOperator(KaapanaPythonBaseOperator):
 
         platform_config = kwargs["dag_run"].conf["platform_config"]
         platform_name = platform_config["default_platform"][request_type]
-        flavor_name = platform_config["platform_config"][platform_name]["default_flavor"][request_type]
+        flavor_name = platform_config["platforms"][platform_name]["default_flavor"][request_type]
         
         operator_dir = os.path.dirname(os.path.abspath(__file__))
         playbooks_dir = os.path.join(operator_dir, "ansible_playbooks")
@@ -33,13 +33,18 @@ class LocalManageIsoInstanceOperator(KaapanaPythonBaseOperator):
         playbook_args = f"instance_name={request_type}_instance instance_state={self.instanceState}"
         
         if platform_name in ["openstack", "qemu_kvm"]:
-            for key, value in platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name].items():
+            for key, value in platform_config["platforms"][platform_name]["platform_flavors"][flavor_name].items():
                 playbook_args += f" {key}={value}"
         else:
             raise AirflowFailException(f"Sorry!! {platform_name.title()} is not yet supported. Please choose a supported platform...")
         
         # print(f"*****************************The EXTRA-VARS are: {playbook_args}************************************")
-        command = ["ansible-playbook", playbook_path, "--extra-vars", playbook_args]
+        if platform_name in "qemu_kvm":
+            vault_text_file = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["vault_text_file"]
+            vault_filepath = os.path.join(playbooks_dir, vault_text_file)
+            command = ["ansible-playbook", f"--vault-password-file={vault_filepath}", playbook_path, "--extra-vars", playbook_args]
+        else:
+            command = ["ansible-playbook", playbook_path, "--extra-vars", playbook_args]
         process = subprocess.Popen(command, stdout=PIPE, stderr=PIPE, encoding="Utf-8")
         while True:
             output = process.stdout.readline()

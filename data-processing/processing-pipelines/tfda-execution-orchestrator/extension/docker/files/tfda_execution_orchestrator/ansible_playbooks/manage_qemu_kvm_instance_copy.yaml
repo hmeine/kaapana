@@ -1,0 +1,188 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    - target: "{{ baremetal_host_domain_name }}"
+  tasks:
+    - add_host:
+        name: "{{ target }}"
+        groups: baremetal_server
+
+- name: Fetch results from isolated execution environment
+  hosts: baremetal_server
+  strategy: free
+  gather_facts: yes
+  remote_user: "{{ remote_username }}"
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/{{ ssh_key_name }}
+
+- name: Create/delete a (QEMU) KVM based VM as an isolated execution environment
+  hosts: localhost
+  gather_facts: yes
+
+  vars:
+    offline_image_source: no
+    selinux_enabled_os: "yes"
+    base_image_name: "{{ base_image_name }}"
+    base_image_path: "Fedora-Cloud-Base-34-1.2.x86_64.qcow2"
+    base_image_url: "https://download.fedoraproject.org/pub/fedora/linux/releases/34/Cloud/x86_64/images/Fedora-Cloud-Base-34-1.2.x86_64.qcow2"
+    base_image_sha: "b9b621b26725ba95442d9a56cbaa054784e0779a9522ec6eafff07c6e6f717ea"
+    libvirt_pool_dir: "/root/airflow/dags/tfda_execution_orchestrator/ansible_playbooks"
+    vm_config_filepath: "KVM_config_file_examples"
+    vm_name: "test-isolated-environment"
+    vm_vcpus: "2"
+    vm_ram_mb: "8192"
+    vm_net: "default"
+    vm_root_pass: "test123"
+    ssh_key: "sshkey"
+    ssh_pub_key: "{{ ssh_key }}.pub"
+    cleanup_download: "no"
+    cleanup_libvirt: "no"
+    instance_state: "present"
+
+  tasks:
+    - name: Ensure requirements in place
+      package:
+        name:
+          - libguestfs-tools
+          - python3-libvirt
+        state: present
+      become: yes
+
+    - name: Get VMs list
+      become: yes
+      community.libvirt.virt:
+        command: list_vms
+      register: existing_vms
+      changed_when: no
+
+    - name: if instance not found
+      debug: 
+        msg: "Desired VM does NOT already exist!"
+      when: "vm_name not in existing_vms.list_vms"
+
+    - name: Create VM if does not exists
+      block:
+      - name: Set libvirt filepath for image
+        set_fact:
+          libvirt_img_filepath: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
+      
+      - name: Modify elements/attributes of the VM XML configuration file according to input parameters
+        include_tasks: customise_kvm_cfg.yaml
+
+      - name: Download base image
+        get_url:
+          url: "{{ base_image_url }}"
+          dest: "{{ base_image_path }}/{{ base_image_name }}"
+          checksum: "sha256:{{ base_image_sha }}"
+        when: not offline_image_source
+
+      - name: Copy base image to libvirt directory
+        become: yes
+        copy:
+          dest: "{{ libvirt_img_filepath }}"
+          src: "{{ base_image_path }}/{{ base_image_name }}"
+          force: no
+          remote_src: yes
+          owner: "libvirt-qemu"
+          group: "kvm"
+          mode: 0660
+        register: copy_results
+
+      - name: Configure the "SELinux" enabled image
+        become: yes
+        command: |
+          virt-customize -a {{ libvirt_img_filepath }} \
+          --hostname {{ vm_name }} \
+          --root-password password:{{ vm_root_pass }} \
+          --uninstall cloud-init \
+          --selinux-relabel
+        when: copy_results is changed and selinux_enabled_os
+
+      - name: Configure the image
+        become: yes
+        command: |
+          virt-customize -a {{ libvirt_img_filepath }} \
+          --hostname {{ vm_name }} \
+          --root-password password:{{ vm_root_pass }} \
+          --ssh-inject 'root:file:{{ ssh_pub_key }}' \
+        when: copy_results is changed and not selinux_enabled_os
+      
+      - name: Define VM
+        become: yes
+        community.libvirt.virt:
+          command: define
+          xml: "{{ lookup('file', '{{ vm_config_filepath }}') }}"
+
+      - name: Ensure VM is started
+        become: yes
+        community.libvirt.virt:
+          name: "{{ vm_name }}"
+          state: running
+        register: vm_start_results
+        until: "vm_start_results is success"
+        retries: 15
+        delay: 2
+
+      - name: Extract VM's IP address
+        become: yes
+        shell: virsh net-dhcp-leases default
+        register: results
+      - set_fact:
+          vm_ip: "{{ results.stdout | regex_search(regexp) }}"
+        vars:
+          regexp: '(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+      - debug:
+          msg: "isolated_env_ip: {{ vm_ip }}"
+
+      - name: Reset fingerprint
+        command: ssh-keygen -R {{ vm_ip }}
+        ignore_errors: yes
+
+      # - name: Wait for SSH on the Instance
+      #   become: yes
+      #   command: "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {{ ssh_key }} root@{{ vm_ip }} true"
+      #   register: result
+      #   until: result.rc == 0
+      #   retries: 6
+      #   delay: 10
+      
+      - name: RESULT
+        debug:
+          msg: "VM CREATED SUCCESSFULLY"
+
+      when: "vm_name not in existing_vms.list_vms and instance_state == 'present'"
+
+    - name: Delete the desired VM
+      block:
+      - name: Shut the desired VM down before deleting
+        become: yes
+        community.libvirt.virt:
+          name: "{{ vm_name }}"
+          command: destroy
+
+      - name: Delete the VM
+        become: yes
+        community.libvirt.virt:
+          name: "{{ vm_name }}"
+          command: undefine        
+    
+      - name: Delete (downloaded) image file
+        become: yes
+        file:
+          path: "{{ base_image_path }}/{{ base_image_name }}"
+          state: absent
+        when: cleanup_download | bool
+      
+      - name: Cleanup libvirt_pool_dir directory
+        become: yes
+        file:
+          path: "{{ libvirt_img_filepath }}"
+          state: absent
+        when: cleanup_libvirt | bool
+      
+      - name: RESULT
+        debug:
+          msg: "VM DELETED SUCCESSFULLY"
+
+      when: "vm_name in existing_vms.list_vms and instance_state == 'absent'"

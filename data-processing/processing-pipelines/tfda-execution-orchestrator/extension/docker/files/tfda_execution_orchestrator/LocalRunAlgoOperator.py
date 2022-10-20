@@ -32,8 +32,8 @@ class LocalRunAlgoOperator(KaapanaPythonBaseOperator):
         user_selected_algo = request_config["user_selected_algorithm"]
         
         # ssh_key_path = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["ssh_key_path"]
-        ssh_key_name = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["ssh_key_name"]
-        remote_username = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["remote_username"]
+        ssh_key_name = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["ssh_key_name"]
+        remote_username = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["remote_username"]
 
         logging.info(f"Running {request_type} workflow...")
         playbook_args = f"target_host={iso_env_ip} ssh_key_name={ssh_key_name} user_selected_algo={user_selected_algo} user_selected_study_data={user_selected_study_data} remote_username={remote_username}"

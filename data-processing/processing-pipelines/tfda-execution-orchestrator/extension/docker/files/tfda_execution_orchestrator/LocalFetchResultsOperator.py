@@ -23,15 +23,15 @@ class LocalFetchResultsOperator(KaapanaPythonBaseOperator):
         
         request_type = request_config["request_type"]
         platform_name = platform_config["default_platform"][request_type]
-        flavor_name = platform_config["platform_config"][platform_name]["default_flavor"][request_type]
+        flavor_name = platform_config["platforms"][platform_name]["default_flavor"][request_type]
         
         fetch_results_playbook_path = os.path.join(playbooks_dir, "fetch_results.yaml")
         if not os.path.isfile(fetch_results_playbook_path):
             raise AirflowFailException(f"Playbook '{fetch_results_playbook_path}' file not found!")
         
-        # ssh_key_path = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["ssh_key_path"]
-        ssh_key_name = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["ssh_key_name"]
-        remote_username = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["remote_username"]
+        # ssh_key_path = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["ssh_key_path"]
+        ssh_key_name = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["ssh_key_name"]
+        remote_username = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["remote_username"]
         
         logging.info(f"Fetching results from isolated execution environment for {request_type} workflow...")
         playbook_args = f"target_host={iso_env_ip} ssh_key_name={ssh_key_name} remote_username={remote_username} results_path={results_path}"

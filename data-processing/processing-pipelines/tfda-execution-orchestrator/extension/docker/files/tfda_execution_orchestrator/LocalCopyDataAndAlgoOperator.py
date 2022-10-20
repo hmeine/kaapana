@@ -27,10 +27,10 @@ class LocalCopyDataAndAlgoOperator(KaapanaPythonBaseOperator):
         
         request_type = request_config["request_type"]
         platform_name = platform_config["default_platform"][request_type]
-        flavor_name = platform_config["platform_config"][platform_name]["default_flavor"][request_type]
+        flavor_name = platform_config["platforms"][platform_name]["default_flavor"][request_type]
         # ssh_key_path = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["ssh_key_path"]
-        ssh_key_name = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["ssh_key_name"]
-        remote_username = platform_config["platform_config"][platform_name]["platform_flavors"][flavor_name]["remote_username"]
+        ssh_key_name = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["ssh_key_name"]
+        remote_username = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["remote_username"]
         user_selected_algo = request_config["user_selected_algorithm"]
         user_selected_study_data = request_config["user_selected_study_data"]
         
