@@ -1,9 +1,25 @@
 ---
-- name: Create/delete a (QEMU) KVM based VM as an isolated execution environment
-  hosts: localhost
-  gather_facts: yes
-
+- hosts: localhost
+  gather_facts: no
   vars:
+    - target: "{{ baremetal_hostname }}"
+  tasks:
+    - add_host:
+        name: "{{ target }}"
+        groups: baremetal_server
+
+- name: Create/delete a (QEMU) KVM based VM as an isolated execution environment on BareMetal host
+  hosts: baremetal_server
+  strategy: free
+  gather_facts: yes
+  remote_user: "{{ baremetal_user }}"
+  vars_files: 
+    - secret # This ansible-vault secret with "ansible_sudo_pass: <user_password>" needs to be created first into the playbooks folder
+  environment:
+    PATH: '/home/{{ baremetal_user }}/.local/bin:{{ ansible_env.PATH }}'
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/{{ ssh_key_name }}
+    # ansible_become_pass: "" # DO NOT USE!! Only meant for testing use above vars_file secrets instead
     offline_image_source: "{{ offline_image_source }}"
     selinux_enabled_os: "{{ selinux_enabled_os }}"
     base_image_name: "{{ base_image_name }}"
