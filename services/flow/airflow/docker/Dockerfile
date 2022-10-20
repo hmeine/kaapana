@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         unzip \
         zip \
         openssh-client \
+        vim \
         # libczmq-dev \
         # libcurlpp-dev \
         # libssl-dev \

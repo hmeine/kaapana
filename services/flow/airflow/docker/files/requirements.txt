@@ -12,6 +12,7 @@ nibabel == 3.2.2
 numpy == 1.21.5
 ansible == 6.3.0
 openstacksdk == 0.61.0
+lxml == 4.9.1
 # gitpython
 # selenium
 # challengeutils
