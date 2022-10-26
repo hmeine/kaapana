@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+appVersion: "0.1.0"
+description: A Flwr FL server for a federated trained classification network to train a breast density classifier
+name: bdc_federated_flwr_server-workflow
+version: "0.1.0"
+keywords:
+- kaapanaworkflow
+- kaapanaexperimental

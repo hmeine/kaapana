@@ -26,7 +26,7 @@ class TrainValDataSplitOperator(KaapanaBaseOperator):
         
         super().__init__(
             dag=dag,
-            name='train_val_datasplit',
+            name='train-val-datasplit',
             image=f"{default_registry}/train-val-datasplit:{default_platform_abbr}_{default_platform_version}__0.1.0",
             image_pull_secrets=["registry-secret"],
             execution_timeout=execution_timeout,

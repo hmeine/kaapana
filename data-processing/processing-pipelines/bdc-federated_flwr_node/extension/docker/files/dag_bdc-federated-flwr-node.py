@@ -2,8 +2,8 @@ from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 from airflow.models import DAG
-from bdc.BreastDensityClassifierOperator import BreastDensityClassifierOperator
-# from bdc.TrainValDataSplitOperator import TrainValDataSplitOperator
+from bdc_federated_flwr_node.BDCFederatedFlwrNodeOperator import BDCFederatedFlwrNodeOperator
+# from bdc_federated_flwr_node.TrainValDataSplitOperator import TrainValDataSplitOperator
 from kaapana.operators.TrainValDataSplitOperator import TrainValDataSplitOperator
 # from kaapana.operators.BreastDensityClassifierOperator import BreastDensityClassifierOperator
 from kaapana.operators.LocalGetInputDataOperator import LocalGetInputDataOperator
@@ -104,7 +104,7 @@ args = {
 }
 
 dag = DAG(
-    dag_id='breast-density-classification',
+    dag_id='bdc-federated-flwr-node',
     default_args=args,
     schedule_interval=None
     )
@@ -132,17 +132,17 @@ train_val_split = TrainValDataSplitOperator(dag=dag,
 
 # dcm images from 'get_input' are mounted in Pod/Container at data/batch/<long char string>/*.dcm
 # minio data from 'get_from_minio' is mounted in Pod/Container at minio/simpleclassification/*.csv
-breast_density_classifier = BreastDensityClassifierOperator(dag=dag,
-                                                            # input_operator=get_input,
-                                                            input_operator=train_val_split,
-                                                            # second_input_operator=train_val_split,
-                                                            # minio_operator=get_from_minio_split,
-                                                            allow_federated_learning=True,
-                                                            trigger_rule=TriggerRule.ALL_DONE,  # if marked as skip_operator still skipped, but if not helps to enforce execution
-                                                            # whitelist_federated_learning=
-                                                            # dev_server='code-server'   # argument which enables debugging via code_server in "Pending Applications"
-                                                            # cmds=["tail"], arguments=["-f", "/dev/null"],
-                                                            )                                                            
+bdc_fl_flwr_node = BDCFederatedFlwrNodeOperator(dag=dag,
+                                                # input_operator=get_input,
+                                                input_operator=train_val_split,
+                                                # second_input_operator=train_val_split,
+                                                # minio_operator=get_from_minio_split,
+                                                allow_federated_learning=True,
+                                                trigger_rule=TriggerRule.ALL_DONE,  # if marked as skip_operator still skipped, but if not helps to enforce execution
+                                                # whitelist_federated_learning=
+                                                # dev_server='code-server'   # argument which enables debugging via code_server in "Pending Applications"
+                                                # cmds=["tail"], arguments=["-f", "/dev/null"],
+                                                )                                                            
 
 clean = LocalWorkflowCleanerOperator(dag=dag,clean_workflow_dir=True)
 
@@ -150,5 +150,5 @@ clean = LocalWorkflowCleanerOperator(dag=dag,clean_workflow_dir=True)
 # Flow
 
 # w/o minio
-get_from_minio_init >> train_val_split >> breast_density_classifier >> clean
+get_from_minio_init >> train_val_split >> bdc_fl_flwr_node >> clean
 get_input >> train_val_split

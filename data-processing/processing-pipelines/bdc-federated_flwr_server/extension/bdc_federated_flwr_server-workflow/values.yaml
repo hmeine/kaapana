@@ -1,0 +1,6 @@
+---
+global:
+    pull_policy_jobs: ""
+    image: "dag-bdc-federated-flwr-server"
+    version: "0.1.0"
+    action: "copy"
