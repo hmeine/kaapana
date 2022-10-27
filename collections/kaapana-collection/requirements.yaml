@@ -66,9 +66,9 @@ dependencies:
   - name: bdc-federated-workflow
     version: 0.1.0
     repository: file://../../data-processing/processing-pipelines/breast_density_classification-federated/extension/bdc-federated-workflow
-  - name: bdc_federated_flwr_node-workflow
+  - name: bdc-flnode-flwr-workflow
     version: 0.1.0
     repository: file://../../data-processing/processing-pipelines/bdc-federated_flwr_node/extension/bdc_federated_flwr_node-workflow
-  - name: bdc_federated_flwr_server-workflow
+  - name: bdc-flsvr-flwr-workflow
     version: 0.1.0
     repository: file://../../data-processing/processing-pipelines/bdc-federated_flwr_server/extension/bdc_federated_flwr_server-workflow
