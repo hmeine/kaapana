@@ -11,7 +11,7 @@ https_port: 443
 dicom_port: 11112
 kaapana_collections:
 - name: kaapana-extension-collection
-  version: 0.1.0
+  version: latest
 preinstall_extensions:
 - name: code-server-chart
   version: 4.2.0

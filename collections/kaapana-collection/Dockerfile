@@ -1,7 +1,7 @@
-FROM local-only/base-charts-manager:0.1.0
+FROM local-only/base-charts-manager:latest
 
 LABEL IMAGE="kaapana-extension-collection"
-LABEL VERSION="0.1.0"
+LABEL VERSION="latest"
 LABEL CI_IGNORE="False"
 
 COPY charts/*.tgz /tmp/

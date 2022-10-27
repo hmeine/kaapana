@@ -2,6 +2,8 @@ from time import time
 import json
 import networkx as nx
 from os.path import join, dirname, basename, exists, isfile, isdir
+from git import Repo
+from datetime import datetime
 
 
 class BuildUtils:
@@ -21,6 +23,7 @@ class BuildUtils:
     create_offline_installation = None
     skip_push_no_changes = None
     push_to_microk8s = None
+    global_build_version = None
 
     @staticmethod
     def add_container_images_available(container_images_available):
@@ -60,6 +63,21 @@ class BuildUtils:
         BuildUtils.create_offline_installation = create_offline_installation
         BuildUtils.skip_push_no_changes = skip_push_no_changes
         BuildUtils.push_to_microk8s = push_to_microk8s
+
+        repo = Repo(BuildUtils.kaapana_dir)
+        assert not repo.bare
+        
+        last_commit = repo.head.commit
+        BuildUtils.last_commit_timestamp = last_commit.committed_datetime.strftime("%d-%m-%Y")
+        BuildUtils.build_timestamp = datetime.now().strftime("%d-%m-%Y")
+
+        git_describe = repo.git.describe()
+        git_current_branch = repo.active_branch.name.split("/")[-1]
+        
+        if git_current_branch != "master":
+            BuildUtils.global_build_version = f"{BuildUtils.last_commit_timestamp}-{git_current_branch}-{git_describe}"
+        else:
+            BuildUtils.global_build_version = f"{BuildUtils.last_commit_timestamp}-{git_describe}"
 
     @staticmethod
     def get_timestamp():

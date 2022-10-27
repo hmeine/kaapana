@@ -260,7 +260,10 @@ class HelmChart:
         assert "version" in self.chart_yaml
 
         self.name = self.chart_yaml["name"]
+
+        
         self.version = self.chart_yaml["version"]
+        # self.version = BuildUtils.global_build_version
         self.project_abbr = self.chart_yaml["project_abbr"] if "project_abbr" in self.chart_yaml else None
 
         self.ignore_linting = False

@@ -128,7 +128,6 @@ class Container:
         return repr_obj
 
     def __init__(self, dockerfile):
-        self.image_name = None
         self.image_version = None
         self.tag = None
         self.path = dockerfile
@@ -187,6 +186,9 @@ class Container:
             self.tag = self.registry+"/"+self.image_name+":"+self.image_version
             if "local-only" in self.tag:
                 self.local_image = True
+                self.image_version = "latest"
+            else:
+                self.image_version = BuildUtils.global_build_version
 
         self.check_if_dag()
 

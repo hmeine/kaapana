@@ -326,7 +326,7 @@ function deploy_chart {
     --set-string global.https_port="$HTTPS_PORT" \
     --set-string global.https_proxy="$https_proxy" \
     --set-string global.kaapana_collections[0].name="kaapana-extension-collection" \
-    --set-string global.kaapana_collections[0].version="0.1.0" \
+    --set-string global.kaapana_collections[0].version="latest" \
     --set-string global.monitoring_namespace="monitoring" \
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
