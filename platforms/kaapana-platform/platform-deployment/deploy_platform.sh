@@ -8,7 +8,7 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="kaapana-platform-chart" # name of the platform Helm chart
-DEFAULT_VERSION="0.1.3-114-g8b062c87-new-versioning"    # version of the platform Helm chart
+DEFAULT_VERSION="0.1.3-115-g67c21189-new-versioning"    # version of the platform Helm chart
 BUILD_TIMESTAMP="02-11-2022"    # version of the platform Helm chart
 LAST_COMMT_TIMESTAMP="02-11-2022"    # version of the platform Helm chart
 
