@@ -8,7 +8,7 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="kaapana-platform-chart" # name of the platform Helm chart
-DEFAULT_VERSION="0.1.3-118-g456a83cd"    # version of the platform Helm chart -> auto-generated
+DEFAULT_VERSION="0.1.3-119-ge283c749"    # version of the platform Helm chart -> auto-generated
 BUILD_TIMESTAMP="02-11-2022"    # timestamp of the build-time -> auto-generated
 BUILD_BRANCH="new-versioning"    # branch name, which was build from -> auto-generated
 LAST_COMMT_TIMESTAMP="02-11-2022" # timestamp of the last commit -> auto-generated
