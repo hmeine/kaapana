@@ -39,6 +39,9 @@ def generate_deployment_script(platform_chart):
 
     platform_params = yaml.load(open(deployment_script_config_path[0]), Loader=yaml.FullLoader)
     platform_params["project_name"] = platform_chart.name
+    platform_params["default_version"] = BuildUtils.global_build_version
+    platform_params["build_timestamp"] = BuildUtils.build_timestamp
+    platform_params["last_commit_timestamp"] = BuildUtils.last_commit_timestamp
     template = env.get_template('deploy_platform_template.sh')  # load template file
 
     output = template.render(**platform_params)
@@ -448,14 +451,10 @@ class HelmChart:
             self.add_container_by_tag(container_tag=f"{BuildUtils.default_registry}/{self.name}:{BuildUtils.global_build_version}")
         
         elif self.values_yaml != None: # if self.kaapana_type == "kaapanaworkflow":
-            if "global" in self.values_yaml and self.values_yaml["global"] is not None:
-                image = None
-                version = None
-                if "image" in self.values_yaml["global"] and self.values_yaml["global"]["image"] != None:
-                    image = self.values_yaml["global"]["image"]
-                else:
-                    return
+            if "global" in self.values_yaml and self.values_yaml["global"] is not None and "image" in self.values_yaml["global"] and self.values_yaml["global"]["image"] != None:
+                image = self.values_yaml["global"]["image"]
 
+                version = None
                 if "version" in self.values_yaml["global"]:
                     version = self.values_yaml["global"]["version"]
                 else:
@@ -499,7 +498,6 @@ class HelmChart:
             #             BuildUtils.logger.info("Not Found image")
 
             #         BuildUtils.logger.info("Found image")
-
             with open(yaml_file, "r") as yaml_content:
                 for line in yaml_content:
                     line = line.rstrip()
@@ -664,61 +662,34 @@ class HelmChart:
     def create_platform_build_files(platform_chart):
         BuildUtils.logger.info(f"{platform_chart.name}: create_platform_build_files")
         assert platform_chart.kaapana_type != None and platform_chart.kaapana_type == "platform"
+        platform_build_files_base_target_dir = join(BuildUtils.build_dir, platform_chart.name)
 
-        platform_build_files_target_dir = join(BuildUtils.build_dir, platform_chart.name)
+        platform_build_files_target_dir = join(platform_build_files_base_target_dir, platform_chart.name)
         HelmChart.create_chart_build_version(src_chart=platform_chart,target_build_dir=platform_build_files_target_dir)
         
-        for collection_name,collection_chart in platform_chart.collections.items():
+        for collection_name,collections_chart in platform_chart.collections.items():
             BuildUtils.logger.info(f"{platform_chart.name} - {collection_name}: create create_collection_build_files")
-            HelmChart.create_collection_build_files(collection_chart=collection_chart,platform_build_files_target_dir=platform_build_files_target_dir)
+            HelmChart.create_collection_build_files(collections_chart=collections_chart,platform_build_files_target_dir=platform_build_files_base_target_dir)
 
         platform_chart.lint_kubeval(build_version=True)
 
     @staticmethod
-    def create_collection_build_files(collection_chart,platform_build_files_target_dir):
+    def create_collection_build_files(collections_chart,platform_build_files_target_dir):
         # iterate over all collection_charts
-        for collection_chart_index, (collection_chart_name, collection_chart) in enumerate(collection_chart.dependencies.items()):
+        collection_build_target_dir = join(platform_build_files_target_dir,collections_chart.name)
+        HelmChart.create_chart_build_version(src_chart=collections_chart, target_build_dir=collection_build_target_dir)
+        for collection_chart_index, (collection_chart_name, collection_chart) in enumerate(collections_chart.dependencies.items()):
             BuildUtils.logger.info(f"Collection chart {collection_chart_index+1}/{collection_chart.dependencies_count_all}: {collection_chart_name}:")
-            collection_chart_target_dir = join(platform_build_files_target_dir,"charts",collection_chart.name)
-            HelmChart.create_chart_build_version(src_chart=collection_chart, target_build_dir=collection_chart_target_dir)
-        #     c_dep_chart.dep_up()
-        #     c_dep_chart.lint_chart()
-        #     c_dep_chart.lint_kubeval()
-        #     c_dep_chart.make_package()
-        #     BuildUtils.logger.info("")
+            collection_chart_target_dir = join(collection_build_target_dir, "charts", collection_chart.name)
+            collection_chart.make_package()
+        print("")
+        collection_container = [x for x in BuildUtils.container_images_available if collections_chart.name in x.tag ]
+        assert len(collection_container) == 1
+        collection_container[0].container_dir = collection_build_target_dir
 
-        # BuildUtils.logger.info("")
-        # assert len(collection.chart_containers) == 1
-
-        # collection_container = list(collection.chart_containers.items())[0][1]
-        # dockerfile_path = collection_container.path
-        # build_dockerfile_path = join(collection.build_chart_dir, "Dockerfile")
-        # shutil.copyfile(
-        #     src=dockerfile_path,
-        #     dst=build_dockerfile_path
-        # )
-        # if len(collection_container.base_images) > 0:
-        #     base_image_container = [x for x in BuildUtils.container_images_available if x.tag == collection_container.base_images[0].tag]
-        #     assert len(base_image_container) == 1
-        #     base_image_container = base_image_container[0]
-        #     base_image_container.build_tag = base_image_container.tag
-        #     base_image_container.container_build_status = "None"
-        #     base_image_container.container_push_status = "None"
-        #     base_image_container.build()
-        # collection_container.path = build_dockerfile_path
-        # collection_container.container_dir = collection.build_chart_dir
-        # collection_container.build_tag = f"{BuildUtils.default_registry}/{collection_container.image_name}:{BuildUtils.global_build_version}"
-        # collection_container.container_build_status = "None"
-        # collection_container.container_push_status = "None"
-        # collection_container.check_prebuild()
-        # collection_container.build()
-        # collection_container.push()
-
-        # BuildUtils.logger.info(f"{chart.chart_id}: collection build-version generated!")
-    
     @staticmethod
     def create_chart_build_version(src_chart, target_build_dir):
-        BuildUtils.logger.info(f"{src_chart.chart_id}: create_chart_build_version -> start")
+        BuildUtils.logger.info(f"{src_chart.chart_id}: create_chart_build_version")
 
         src_chart.lint_chart()
 
@@ -741,7 +712,7 @@ class HelmChart:
         src_chart.build_chartfile = join(target_build_dir, "Chart.yaml")
 
         for dep_chart_index, (dep_chart_key, dep_chart) in enumerate(src_chart.dependencies.items()):
-            dep_chart_build_target_dir = join(target_build_dir, "charts",dep_chart.name)
+            dep_chart_build_target_dir = join(target_build_dir, "charts", dep_chart.name)
             HelmChart.create_chart_build_version(src_chart=dep_chart,target_build_dir=dep_chart_build_target_dir)
             
             assert exists(dep_chart.build_chartfile)
@@ -750,8 +721,6 @@ class HelmChart:
             chart_container.build_tag = f"{BuildUtils.default_registry}/{chart_container.image_name}:{BuildUtils.global_build_version}"
             chart_container.container_build_status = "None"
             chart_container.container_push_status = "None"
-
-        BuildUtils.logger.info(f"{src_chart.chart_id}: create_chart_build_version -> done")
 
     @staticmethod
     def build_platform(platform_chart):

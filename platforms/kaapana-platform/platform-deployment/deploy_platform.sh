@@ -8,9 +8,9 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="kaapana-platform-chart" # name of the platform Helm chart
-PROJECT_ABBR="kp" # abbrevention for the platform-name
-DEFAULT_VERSION="0.1.4"    # version of the platform Helm chart
-BUILD_VERSION=""    # version of the platform Helm chart
+DEFAULT_VERSION="0.1.3-29-gc1000d83-new-versioning"    # version of the platform Helm chart
+BUILD_TIMESTAMP="02-11-2022"    # version of the platform Helm chart
+LAST_COMMT_TIMESTAMP="02-11-2022"    # version of the platform Helm chart
 
 CONTAINER_REGISTRY_URL="" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME=""
@@ -20,7 +20,7 @@ CONTAINER_REGISTRY_PASSWORD=""
 # Deployment configuration
 ######################################################
 
-DEV_MODE="true" # dev-mode -> containers will always be re-downloaded after pod-restart
+DEV_MODE="false" # dev-mode -> containers will always be re-downloaded after pod-restart
 DEV_PORTS="false"
 GPU_SUPPORT="false"
 
@@ -327,7 +327,7 @@ function deploy_chart {
     --set-string global.https_port="$HTTPS_PORT" \
     --set-string global.https_proxy="$https_proxy" \
     --set-string global.kaapana_collections[0].name="kaapana-extension-collection" \
-    --set-string global.kaapana_collections[0].version="latest" \
+    --set-string global.kaapana_collections[0].version="0.1.0" \
     --set-string global.monitoring_namespace="monitoring" \
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
@@ -343,9 +343,11 @@ function deploy_chart {
     --set-string global.pull_policy_pods="$PULL_POLICY_PODS" \
     --set-string global.registry_url="$CONTAINER_REGISTRY_URL" \
     --set-string global.release_name="$PROJECT_NAME" \
+    --set-string global.version="$chart_version" \
+    --set-string global.build_timestamp="$BUILD_TIMESTAMP" \
+    --set-string global.last_commit_timestamp="$LAST_COMMT_TIMESTAMP" \
     --set-string global.slow_data_dir="$SLOW_DATA_DIR" \
     --set-string global.store_namespace="store" \
-    --set-string global.version="$chart_version" \
     --set-string global.instance_name="$INSTANCE_NAME" \
     --name-template "$PROJECT_NAME"
 

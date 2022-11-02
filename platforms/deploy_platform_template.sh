@@ -9,7 +9,8 @@ export HELM_EXPERIMENTAL_OCI=1
 
 PROJECT_NAME="{{ project_name }}" # name of the platform Helm chart
 DEFAULT_VERSION="{{ default_version }}"    # version of the platform Helm chart
-BUILD_VERSION="{{ build_version }}"    # version of the platform Helm chart
+BUILD_TIMESTAMP="{{ build_timestamp }}"    # version of the platform Helm chart
+LAST_COMMT_TIMESTAMP="{{ last_commit_timestamp }}"    # version of the platform Helm chart
 
 CONTAINER_REGISTRY_URL="{{ container_registry_url|default('', true) }}" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME="{{ container_registry_username|default('', true) }}"
@@ -345,9 +346,11 @@ function deploy_chart {
     --set-string global.pull_policy_pods="$PULL_POLICY_PODS" \
     --set-string global.registry_url="$CONTAINER_REGISTRY_URL" \
     --set-string global.release_name="$PROJECT_NAME" \
+    --set-string global.version="$chart_version" \
+    --set-string global.build_timestamp="$BUILD_TIMESTAMP" \
+    --set-string global.last_commit_timestamp="$LAST_COMMT_TIMESTAMP" \
     --set-string global.slow_data_dir="$SLOW_DATA_DIR" \
     --set-string global.store_namespace="store" \
-    --set-string global.version="$chart_version" \
     {% for item in additional_env -%}--set-string {{ item.helm_path }}="${{ item.name }}" \
     {% endfor -%}
     --name-template "$PROJECT_NAME"
