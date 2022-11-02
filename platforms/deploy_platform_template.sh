@@ -8,8 +8,8 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="{{ project_name }}" # name of the platform Helm chart
-PROJECT_ABBR="{{ project_abbr }}" # abbrevention for the platform-name
 DEFAULT_VERSION="{{ default_version }}"    # version of the platform Helm chart
+BUILD_VERSION="{{ build_version }}"    # version of the platform Helm chart
 
 CONTAINER_REGISTRY_URL="{{ container_registry_url|default('', true) }}" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME="{{ container_registry_username|default('', true) }}"
@@ -333,8 +333,8 @@ function deploy_chart {
     --set-string global.monitoring_namespace="monitoring" \
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
-    --set-string global.platform_abbr="$PROJECT_ABBR" \
     --set-string global.platform_version="$chart_version" \
+    --set-string global.build_version="$build_version" \
     --set-string global.prefetch_extensions="$PREFETCH_EXTENSIONS" \
     {% for item in preinstall_extensions -%}
     --set-string global.preinstall_extensions[{{loop.index0}}].name="{{ item.name }}" \

@@ -75,9 +75,9 @@ class BuildUtils:
         git_current_branch = repo.active_branch.name.split("/")[-1]
         
         if git_current_branch != "master":
-            BuildUtils.global_build_version = f"{BuildUtils.last_commit_timestamp}-{git_current_branch}-{git_describe}"
+            BuildUtils.global_build_version = f"{git_describe}-{git_current_branch}"
         else:
-            BuildUtils.global_build_version = f"{BuildUtils.last_commit_timestamp}-{git_describe}"
+            BuildUtils.global_build_version = f"{git_describe}"
 
     @staticmethod
     def get_timestamp():

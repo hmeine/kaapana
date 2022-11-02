@@ -10,6 +10,7 @@ export HELM_EXPERIMENTAL_OCI=1
 PROJECT_NAME="kaapana-platform-chart" # name of the platform Helm chart
 PROJECT_ABBR="kp" # abbrevention for the platform-name
 DEFAULT_VERSION="0.1.4"    # version of the platform Helm chart
+BUILD_VERSION=""    # version of the platform Helm chart
 
 CONTAINER_REGISTRY_URL="" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME=""
@@ -330,8 +331,8 @@ function deploy_chart {
     --set-string global.monitoring_namespace="monitoring" \
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
-    --set-string global.platform_abbr="$PROJECT_ABBR" \
     --set-string global.platform_version="$chart_version" \
+    --set-string global.build_version="$build_version" \
     --set-string global.prefetch_extensions="$PREFETCH_EXTENSIONS" \
     --set-string global.preinstall_extensions[0].name="code-server-chart" \
     --set-string global.preinstall_extensions[0].version="4.2.0" \
