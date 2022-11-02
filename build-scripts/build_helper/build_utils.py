@@ -72,12 +72,9 @@ class BuildUtils:
         BuildUtils.build_timestamp = datetime.now().strftime("%d-%m-%Y")
 
         git_describe = repo.git.describe()
-        git_current_branch = repo.active_branch.name.split("/")[-1]
+        BuildUtils.build_branch = repo.active_branch.name.split("/")[-1]
         
-        if git_current_branch != "master":
-            BuildUtils.global_build_version = f"{git_describe}-{git_current_branch}"
-        else:
-            BuildUtils.global_build_version = f"{git_describe}"
+        BuildUtils.global_build_version = f"{git_describe}"
 
     @staticmethod
     def get_timestamp():

@@ -8,8 +8,9 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="kaapana-platform-chart" # name of the platform Helm chart
-DEFAULT_VERSION="0.1.3-115-g67c21189-new-versioning"    # version of the platform Helm chart
+DEFAULT_VERSION="0.1.3-116-g0a293592"    # version of the platform Helm chart
 BUILD_TIMESTAMP="02-11-2022"    # version of the platform Helm chart
+BUILD_BRANCH="new-versioning"    # version of the platform Helm chart
 LAST_COMMT_TIMESTAMP="02-11-2022"    # version of the platform Helm chart
 
 CONTAINER_REGISTRY_URL="" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
@@ -332,7 +333,7 @@ function deploy_chart {
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
     --set-string global.platform_version="$chart_version" \
-    --set-string global.build_version="$build_version" \
+    --set-string global.build_version="$DEFAULT_VERSION" \
     --set-string global.prefetch_extensions="$PREFETCH_EXTENSIONS" \
     --set-string global.preinstall_extensions[0].name="code-server-chart" \
     --set-string global.preinstall_extensions[0].version="4.2.0" \
@@ -345,6 +346,7 @@ function deploy_chart {
     --set-string global.release_name="$PROJECT_NAME" \
     --set-string global.version="$chart_version" \
     --set-string global.build_timestamp="$BUILD_TIMESTAMP" \
+    --set-string global.build_branch="$BUILD_BRANCH" \
     --set-string global.last_commit_timestamp="$LAST_COMMT_TIMESTAMP" \
     --set-string global.slow_data_dir="$SLOW_DATA_DIR" \
     --set-string global.store_namespace="store" \

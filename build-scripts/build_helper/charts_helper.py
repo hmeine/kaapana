@@ -41,6 +41,7 @@ def generate_deployment_script(platform_chart):
     platform_params["project_name"] = platform_chart.name
     platform_params["default_version"] = BuildUtils.global_build_version
     platform_params["build_timestamp"] = BuildUtils.build_timestamp
+    platform_params["build_branch"] = BuildUtils.build_branch
     platform_params["last_commit_timestamp"] = BuildUtils.last_commit_timestamp
     template = env.get_template('deploy_platform_template.sh')  # load template file
 
@@ -261,7 +262,6 @@ class HelmChart:
 
         self.name = self.chart_yaml["name"]
 
-        
         self.version = self.chart_yaml["version"]
 
         self.ignore_linting = False
@@ -280,6 +280,7 @@ class HelmChart:
         if self.kaapana_type == "platform":
             
             deployment_config = glob(dirname(self.chart_dir)+"/**/deployment_config.yaml", recursive=True)
+            self.version = BuildUtils.global_build_version
             assert len(deployment_config) == 1
 
             deployment_config = deployment_config[0]
@@ -710,6 +711,16 @@ class HelmChart:
 
         src_chart.build_chart_dir = target_build_dir
         src_chart.build_chartfile = join(target_build_dir, "Chart.yaml")
+
+        if os.path.exists(src_chart.build_chartfile):
+            with open(src_chart.build_chartfile, "r") as f:
+                chart_file_lines = f.readlines()
+            with open(src_chart.build_chartfile, "w") as f:
+                for chart_file_line in chart_file_lines :
+                    if "version:" in chart_file_line.strip("\n"):
+                        f.write(f"version: \"{BuildUtils.global_build_version}\"\n")
+                    else:
+                        f.write(chart_file_line)
 
         for dep_chart_index, (dep_chart_key, dep_chart) in enumerate(src_chart.dependencies.items()):
             dep_chart_build_target_dir = join(target_build_dir, "charts", dep_chart.name)

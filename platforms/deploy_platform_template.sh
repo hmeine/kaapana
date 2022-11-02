@@ -8,9 +8,10 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="{{ project_name }}" # name of the platform Helm chart
-DEFAULT_VERSION="{{ default_version }}"    # version of the platform Helm chart
-BUILD_TIMESTAMP="{{ build_timestamp }}"    # version of the platform Helm chart
-LAST_COMMT_TIMESTAMP="{{ last_commit_timestamp }}"    # version of the platform Helm chart
+DEFAULT_VERSION="{{ default_version }}"    # version of the platform Helm chart -> auto-generated
+BUILD_TIMESTAMP="{{ build_timestamp }}"    # timestamp of the build-time -> auto-generated
+BUILD_BRANCH="{{ build_branch }}"    # branch name, which was build from -> auto-generated
+LAST_COMMT_TIMESTAMP="{{ last_commit_timestamp }}" # timestamp of the last commit -> auto-generated
 
 CONTAINER_REGISTRY_URL="{{ container_registry_url|default('', true) }}" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME="{{ container_registry_username|default('', true) }}"
@@ -335,7 +336,7 @@ function deploy_chart {
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
     --set-string global.platform_version="$chart_version" \
-    --set-string global.build_version="$build_version" \
+    --set-string global.build_version="$DEFAULT_VERSION" \
     --set-string global.prefetch_extensions="$PREFETCH_EXTENSIONS" \
     {% for item in preinstall_extensions -%}
     --set-string global.preinstall_extensions[{{loop.index0}}].name="{{ item.name }}" \
@@ -348,6 +349,7 @@ function deploy_chart {
     --set-string global.release_name="$PROJECT_NAME" \
     --set-string global.version="$chart_version" \
     --set-string global.build_timestamp="$BUILD_TIMESTAMP" \
+    --set-string global.build_branch="$BUILD_BRANCH" \
     --set-string global.last_commit_timestamp="$LAST_COMMT_TIMESTAMP" \
     --set-string global.slow_data_dir="$SLOW_DATA_DIR" \
     --set-string global.store_namespace="store" \
