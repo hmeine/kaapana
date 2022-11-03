@@ -39,10 +39,11 @@ def generate_deployment_script(platform_chart):
 
     platform_params = yaml.load(open(deployment_script_config_path[0]), Loader=yaml.FullLoader)
     platform_params["project_name"] = platform_chart.name
-    platform_params["default_version"] = BuildUtils.global_build_version
+    platform_params["container_registry_url"] = BuildUtils.default_registry
     platform_params["build_timestamp"] = BuildUtils.build_timestamp
-    platform_params["build_branch"] = BuildUtils.build_branch
-    platform_params["last_commit_timestamp"] = BuildUtils.last_commit_timestamp
+    platform_params["kaapana_build_version"] = BuildUtils.kaapana_build_version
+    platform_params["kaapana_build_branch"] = BuildUtils.kaapana_build_branch
+    platform_params["kaapana_last_commit_timestamp"] = BuildUtils.kaapana_last_commit_timestamp
     template = env.get_template('deploy_platform_template.sh')  # load template file
 
     output = template.render(**platform_params)
@@ -209,6 +210,7 @@ class HelmChart:
     def __init__(self, chartfile):
         self.name = None
         self.version = None
+        self.app_version = None
         self.chart_id = None
         self.kaapana_type = None
         self.ignore_linting = False
@@ -258,17 +260,24 @@ class HelmChart:
                 self.values_yaml = None
 
         assert "name" in self.chart_yaml
-        assert "version" in self.chart_yaml
-
         self.name = self.chart_yaml["name"]
 
-        self.version = self.chart_yaml["version"]
+        if "appVersion" in self.chart_yaml:
+            self.app_version = self.chart_yaml["appVersion"]
+
+        if "version" in self.chart_yaml and self.chart_yaml["version"] != "0.0.0":
+            self.version = self.chart_yaml["version"]
+        else:
+            chart_build_version,chart_build_branch,chart_last_commit,chart_last_commit_timestamp = BuildUtils.get_repo_info(self.chart_dir)
+            self.version = chart_build_version
+
 
         self.ignore_linting = False
         if "ignore_linting" in self.chart_yaml:
             self.ignore_linting = self.chart_yaml["ignore_linting"]
 
-        self.chart_id = f"{self.name}:{self.version}"
+        self.chart_id = f"{self.name}"
+        # self.chart_id = f"{self.name}:{self.app_version}"
         BuildUtils.logger.debug(f"{self.chart_id}: chart init")
 
 
@@ -278,23 +287,21 @@ class HelmChart:
             self.kaapana_type = "kaapanaworkflow"
 
         if self.kaapana_type == "platform":
-            
             deployment_config = glob(dirname(self.chart_dir)+"/**/deployment_config.yaml", recursive=True)
-            self.version = BuildUtils.global_build_version
             assert len(deployment_config) == 1
 
             deployment_config = deployment_config[0]
             platform_params = yaml.load(open(deployment_config), Loader=yaml.FullLoader)
             if "kaapana_collections" in platform_params:
                 self.kaapana_collections = platform_params["kaapana_collections"]
-
+        
         self.check_container_use()
 
     def add_dependency_by_id(self, dependency_id):
         if dependency_id in self.dependencies:
             BuildUtils.logger.info(f"{self.chart_id}: check_dependencies {dependency_id} already present.")
 
-        chart_available = [x for x in BuildUtils.charts_available if x == dependency_id]
+        chart_available = [x for x in BuildUtils.charts_available if x.name == dependency_id]
 
         if len(chart_available) == 1:
             dep_chart = chart_available[0]
@@ -359,15 +366,16 @@ class HelmChart:
 
             self.dependencies_count_all = len(requirements_yaml["dependencies"])
             for dependency in requirements_yaml["dependencies"]:
-                if "name" not in dependency or "version" not in dependency:
-                    BuildUtils.generate_issue(
-                        component=suite_tag,
-                        name=f"{self.chart_id}",
-                        msg="check_dependencies failed! -> name or version missing!",
-                        level="ERROR"
-                    )
-                    return
-                dependency_id = f"{dependency['name']}:{dependency['version']}"
+                # if "name" not in dependency or "version" not in dependency:
+                #     BuildUtils.generate_issue(
+                #         component=suite_tag,
+                #         name=f"{self.chart_id}",
+                #         msg="check_dependencies failed! -> name or version missing!",
+                #         level="ERROR"
+                #     )
+                #     return
+                dependency_id = f"{dependency['name']}"
+                # dependency_id = f"{dependency['name']}:{dependency['version']}"
                 self.add_dependency_by_id(dependency_id=dependency_id)
 
             BuildUtils.logger.debug(f"{self.chart_id}: found {len(self.dependencies)}/{self.dependencies_count_all} dependencies.")
@@ -389,7 +397,8 @@ class HelmChart:
             return
 
         for collection in self.kaapana_collections:
-            extension_collection_id = f"{collection['name']}:{collection['version']}"
+            extension_collection_id = f"{collection['name']}"
+            # extension_collection_id = f"{collection['name']}:{collection['version']}"
             collection_chart = [x for x in BuildUtils.charts_available if x == extension_collection_id]
             if len(collection_chart) == 1:
                 self.collections[collection_chart[0].chart_id] = collection_chart[0]
@@ -449,7 +458,7 @@ class HelmChart:
         BuildUtils.logger.debug(f"{self.chart_id}: check_container_use")
 
         if self.kaapana_type == "extenstion-collection":
-            self.add_container_by_tag(container_tag=f"{BuildUtils.default_registry}/{self.name}:{BuildUtils.global_build_version}")
+            self.add_container_by_tag(container_tag=f"{BuildUtils.default_registry}/{self.name}:{BuildUtils.kaapana_build_version}")
         
         elif self.values_yaml != None: # if self.kaapana_type == "kaapanaworkflow":
             if "global" in self.values_yaml and self.values_yaml["global"] is not None and "image" in self.values_yaml["global"] and self.values_yaml["global"]["image"] != None:
@@ -459,7 +468,7 @@ class HelmChart:
                 if "version" in self.values_yaml["global"]:
                     version = self.values_yaml["global"]["version"]
                 else:
-                    version = BuildUtils.global_build_version
+                    version = BuildUtils.kaapana_build_version
                 
                 assert version != None
                 assert image != None
@@ -517,7 +526,7 @@ class HelmChart:
                         else:
                             container_tag = line.replace("}", "").replace("{", "").replace(" ", "").replace("$", "")
                             container_tag = container_tag.replace(".Values.global.registry_url", BuildUtils.default_registry)
-                            container_tag = container_tag.replace(".Values.global.build_version", BuildUtils.global_build_version)
+                            container_tag = container_tag.replace(".Values.global.build_version", BuildUtils.kaapana_build_version)
                             self.add_container_by_tag(container_tag=container_tag)
 
     def lint_chart(self,build_version=False):
@@ -683,7 +692,6 @@ class HelmChart:
             BuildUtils.logger.info(f"Collection chart {collection_chart_index+1}/{collection_chart.dependencies_count_all}: {collection_chart_name}:")
             collection_chart_target_dir = join(collection_build_target_dir, "charts", collection_chart.name)
             collection_chart.make_package()
-        print("")
         collection_container = [x for x in BuildUtils.container_images_available if collections_chart.name in x.tag ]
         assert len(collection_container) == 1
         collection_container[0].container_dir = collection_build_target_dir
@@ -692,8 +700,7 @@ class HelmChart:
     def create_chart_build_version(src_chart, target_build_dir):
         BuildUtils.logger.info(f"{src_chart.chart_id}: create_chart_build_version")
 
-        src_chart.lint_chart()
-
+        src_chart.lint_chart(build_version=False)
         shutil.copytree(
             src=src_chart.chart_dir,
             dst=target_build_dir
@@ -712,15 +719,16 @@ class HelmChart:
         src_chart.build_chart_dir = target_build_dir
         src_chart.build_chartfile = join(target_build_dir, "Chart.yaml")
 
-        if os.path.exists(src_chart.build_chartfile):
-            with open(src_chart.build_chartfile, "r") as f:
-                chart_file_lines = f.readlines()
-            with open(src_chart.build_chartfile, "w") as f:
-                for chart_file_line in chart_file_lines :
-                    if "version:" in chart_file_line.strip("\n"):
-                        f.write(f"version: \"{BuildUtils.global_build_version}\"\n")
-                    else:
-                        f.write(chart_file_line)
+        assert exists(src_chart.build_chartfile)
+        
+        with open(src_chart.build_chartfile, "r") as f:
+            chart_file_lines = f.readlines()
+        with open(src_chart.build_chartfile, "w") as f:
+            for chart_file_line in chart_file_lines :
+                if "version:" in chart_file_line.strip("\n"):
+                    f.write(f"version: \"{src_chart.version}\"\n")
+                else:
+                    f.write(chart_file_line)
 
         for dep_chart_index, (dep_chart_key, dep_chart) in enumerate(src_chart.dependencies.items()):
             dep_chart_build_target_dir = join(target_build_dir, "charts", dep_chart.name)
@@ -729,9 +737,10 @@ class HelmChart:
             assert exists(dep_chart.build_chartfile)
 
         for chart_container_id, chart_container in src_chart.chart_containers.items():
-            chart_container.build_tag = f"{BuildUtils.default_registry}/{chart_container.image_name}:{BuildUtils.global_build_version}"
+            chart_container.build_tag = f"{BuildUtils.default_registry}/{chart_container.image_name}:{BuildUtils.kaapana_build_version}"
             chart_container.container_build_status = "None"
             chart_container.container_push_status = "None"
+
 
     @staticmethod
     def build_platform(platform_chart):

@@ -493,7 +493,7 @@ def execute_update_extensions():
 
     chart = {
         'name': 'update-collections-chart',
-        'version': '0.1.0'
+        'version': '0.0.0'
     } 
     print(chart['name'], chart['version'])
     payload = {k: chart[k] for k in ('name', 'version')}

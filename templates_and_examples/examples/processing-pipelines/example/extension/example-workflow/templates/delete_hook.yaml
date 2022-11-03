@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: remove-{{ .Values.image }}
-        image: "{{ .Values.global.registry_url }}/{{ .Values.image }}:{{ .Values.global.build_version  }}
+        image: "{{ .Values.global.registry_url }}/{{ .Values.image }}:{{ .Values.global.build_version  }}"
         imagePullPolicy:  {{ .Values.global.pull_policy_jobs }}
         env:
         - name: ACTION

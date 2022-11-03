@@ -1,5 +1,6 @@
 from time import time
 import json
+import semver
 import networkx as nx
 from os.path import join, dirname, basename, exists, isfile, isdir
 from git import Repo
@@ -23,7 +24,10 @@ class BuildUtils:
     create_offline_installation = None
     skip_push_no_changes = None
     push_to_microk8s = None
-    global_build_version = None
+    kaapana_build_version = None
+    kaapana_build_branch = None
+    kaapana_last_commit_timestamp = None
+    build_timestamp = None
 
     @staticmethod
     def add_container_images_available(container_images_available):
@@ -64,21 +68,38 @@ class BuildUtils:
         BuildUtils.skip_push_no_changes = skip_push_no_changes
         BuildUtils.push_to_microk8s = push_to_microk8s
 
-        repo = Repo(BuildUtils.kaapana_dir)
-        assert not repo.bare
-        
-        last_commit = repo.head.commit
-        BuildUtils.last_commit_timestamp = last_commit.committed_datetime.strftime("%d-%m-%Y")
         BuildUtils.build_timestamp = datetime.now().strftime("%d-%m-%Y")
 
-        git_describe = repo.git.describe()
-        BuildUtils.build_branch = repo.active_branch.name.split("/")[-1]
-        
-        BuildUtils.global_build_version = f"{git_describe}"
+        build_version,build_branch,last_commit,last_commit_timestamp = BuildUtils.get_repo_info(BuildUtils.kaapana_dir)
+        BuildUtils.kaapana_last_commit_timestamp = last_commit
+        BuildUtils.kaapana_build_branch = build_branch
+        BuildUtils.kaapana_build_version = build_version
+
+        BuildUtils.logger.debug(f"{BuildUtils.kaapana_dir=}")
+        BuildUtils.logger.debug(f"{BuildUtils.kaapana_build_branch=}")
+        BuildUtils.logger.debug(f"{BuildUtils.kaapana_build_version=}")
+        BuildUtils.logger.debug(f"{BuildUtils.kaapana_last_commit_timestamp=}")
+        BuildUtils.logger.debug(f"{BuildUtils.build_timestamp=}")
 
     @staticmethod
     def get_timestamp():
         return str(int(time() * 1000))
+    
+    @staticmethod
+    def get_repo_info(repo_dir):
+        while not exists(join(repo_dir,".git")) and repo_dir != "/":
+            repo_dir = dirname(repo_dir)
+        assert repo_dir != "/"
+        repo = Repo(repo_dir)
+        assert not repo.bare
+        
+        last_commit = repo.head.commit
+        last_commit_timestamp = last_commit.committed_datetime.strftime("%d-%m-%Y")
+        build_version = repo.git.describe()
+        build_branch = repo.active_branch.name.split("/")[-1]
+        version_check = semver.VersionInfo.parse(build_version)
+        
+        return build_version,build_branch,last_commit,last_commit_timestamp
 
     @staticmethod
     def get_build_order(build_graph):
@@ -96,15 +117,22 @@ class BuildUtils:
             if "chart:" in entry:
                 if entry_id in BuildUtils.charts_unused:
                     del BuildUtils.charts_unused[entry_id]
+                    BuildUtils.logger.debug(f"{entry_id} removed from charts_unused!")
                 else:
-                    print(f"{entry_id} not found!")
+                    BuildUtils.logger.warning(f"{entry_id} not found!")
                 continue
+
             elif "base-image:" in entry:
                 if entry_id in BuildUtils.container_images_unused:
+                    BuildUtils.logger.debug(f"{entry_id} removed from container_images_unused!")
                     del BuildUtils.container_images_unused[entry_id]
+
             elif "container:" in entry:
                 if entry_id in BuildUtils.container_images_unused:
+                    BuildUtils.logger.debug(f"{entry_id} removed from container_images_unused!")
                     del BuildUtils.container_images_unused[entry_id]
+                else:
+                    BuildUtils.logger.warning(f"{entry_id} not found!")
 
             if "local-only" in name or BuildUtils.default_registry in name:
                 build_order.append(entry_id)

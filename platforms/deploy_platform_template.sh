@@ -8,10 +8,10 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="{{ project_name }}" # name of the platform Helm chart
-DEFAULT_VERSION="{{ default_version }}"    # version of the platform Helm chart -> auto-generated
+KAAPANA_BUILD_VERSION="{{ kaapana_build_version }}"    # version of the platform Helm chart -> auto-generated
 BUILD_TIMESTAMP="{{ build_timestamp }}"    # timestamp of the build-time -> auto-generated
-BUILD_BRANCH="{{ build_branch }}"    # branch name, which was build from -> auto-generated
-LAST_COMMT_TIMESTAMP="{{ last_commit_timestamp }}" # timestamp of the last commit -> auto-generated
+KAAPANA_BUILD_BRANCH="{{ kaapana_build_branch }}"    # branch name, which was build from -> auto-generated
+KAAPANA_LAST_COMMT_TIMESTAMP="{{ kaapana_last_commit_timestamp }}" # timestamp of the last commit -> auto-generated
 
 CONTAINER_REGISTRY_URL="{{ container_registry_url|default('', true) }}" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME="{{ container_registry_username|default('', true) }}"
@@ -220,9 +220,9 @@ function deploy_chart {
 
     if [ ! "$QUIET" = "true" ] && [ -z "$CHART_PATH" ];then
         echo -e ""
-        read -e -p "${YELLOW}Which $PROJECT_NAME version do you want to deploy?: ${NC}" -i $DEFAULT_VERSION chart_version;
+        read -e -p "${YELLOW}Which $PROJECT_NAME version do you want to deploy?: ${NC}" -i $KAAPANA_BUILD_VERSION chart_version;
     else
-        chart_version=$DEFAULT_VERSION
+        chart_version=$KAAPANA_BUILD_VERSION
     fi
 
     if [ "$GPU_SUPPORT" = "true" ];then
@@ -258,8 +258,8 @@ function deploy_chart {
         echo -e "${YELLOW}We assume that that all images are already presented inside the microk8s.${NC}"
         echo -e "${YELLOW}Images are uploaded either with a previous deployment from a docker registry or uploaded from a tar or directly uploaded during building the platform.${NC}"
 
-        if [ $(basename "$CHART_PATH") != "$PROJECT_NAME-$DEFAULT_VERSION.tgz" ]; then
-            echo "${RED} Version of chart_path $CHART_PATH differs from PROJECT_NAME: $PROJECT_NAME and DEFAULT_VERSION: $DEFAULT_VERSION in the deployment script.${NC}" 
+        if [ $(basename "$CHART_PATH") != "$PROJECT_NAME-$KAAPANA_BUILD_VERSION.tgz" ]; then
+            echo "${RED} Version of chart_path $CHART_PATH differs from PROJECT_NAME: $PROJECT_NAME and KAAPANA_BUILD_VERSION: $KAAPANA_BUILD_VERSION in the deployment script.${NC}" 
             exit 1
         fi
 
@@ -330,17 +330,17 @@ function deploy_chart {
     --set-string global.https_proxy="$https_proxy" \
     {% for item in kaapana_collections -%}
     --set-string global.kaapana_collections[{{loop.index0}}].name="{{ item.name }}" \
-    --set-string global.kaapana_collections[{{loop.index0}}].version="{{ item.version }}" \
+    --set-string global.kaapana_collections[{{loop.index0}}].version="$KAAPANA_BUILD_VERSION" \
     {% endfor -%}
     --set-string global.monitoring_namespace="monitoring" \
     --set-string global.meta_namespace="meta" \
     --set-string global.offline_mode="$OFFLINE_MODE" \
     --set-string global.platform_version="$chart_version" \
-    --set-string global.build_version="$DEFAULT_VERSION" \
+    --set-string global.build_version="$KAAPANA_BUILD_VERSION" \
     --set-string global.prefetch_extensions="$PREFETCH_EXTENSIONS" \
     {% for item in preinstall_extensions -%}
     --set-string global.preinstall_extensions[{{loop.index0}}].name="{{ item.name }}" \
-    --set-string global.preinstall_extensions[{{loop.index0}}].version="{{ item.version }}" \
+    --set-string global.preinstall_extensions[{{loop.index0}}].version="$KAAPANA_BUILD_VERSION" \
     {% endfor -%}
     --set-string global.pull_policy_jobs="$PULL_POLICY_JOBS" \
     --set-string global.pull_policy_operators="$PULL_POLICY_OPERATORS" \
@@ -349,8 +349,8 @@ function deploy_chart {
     --set-string global.release_name="$PROJECT_NAME" \
     --set-string global.version="$chart_version" \
     --set-string global.build_timestamp="$BUILD_TIMESTAMP" \
-    --set-string global.build_branch="$BUILD_BRANCH" \
-    --set-string global.last_commit_timestamp="$LAST_COMMT_TIMESTAMP" \
+    --set-string global.build_branch="$KAAPANA_BUILD_BRANCH" \
+    --set-string global.last_commit_timestamp="$KAAPANA_LAST_COMMT_TIMESTAMP" \
     --set-string global.slow_data_dir="$SLOW_DATA_DIR" \
     --set-string global.store_namespace="store" \
     {% for item in additional_env -%}--set-string {{ item.helm_path }}="${{ item.name }}" \
@@ -658,7 +658,7 @@ _Argument: --version [version]
 
 where version is one of the available platform releases:
     0.1.4  --> latest Kaapana release
-    $DEFAULT_VERSION  --> latest development version ${NC}"
+    $KAAPANA_BUILD_VERSION  --> latest development version ${NC}"
 
 QUIET=NA
 
@@ -669,7 +669,7 @@ do
 
     case $key in
         -v|--version)
-            DEFAULT_VERSION="$2"
+            KAAPANA_BUILD_VERSION="$2"
             shift # past argument
             shift # past value
         ;;

@@ -23,7 +23,7 @@ spec:
         {{- if not .Values.image }}
         image: "{{ .Values.global.registry_url }}/jupyterlab:{{ .Values.global.build_version  }}"
         {{- else }}
-        image: {{ .Values.image }}
+        image: "{{ .Values.image }}"
         {{- end }}
         imagePullPolicy: {{ .Values.global.pull_policy_pods }}
         command: ["/bin/bash"]
