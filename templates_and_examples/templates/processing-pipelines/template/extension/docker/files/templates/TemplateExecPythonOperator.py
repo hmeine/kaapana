@@ -15,7 +15,7 @@ class TemplateExecPythonOperator(KaapanaBaseOperator):
         super().__init__(
             dag=dag,
             name='temp-exec-python',
-            image=f"{default_registry}/python-template:{default_build_version}
+            image=f"{default_registry}/python-template:{default_build_version}",
             image_pull_secrets=["registry-secret"],
             execution_timeout=execution_timeout,
             *args,

@@ -53,7 +53,7 @@ class OrganSegmentationOperator(KaapanaBaseOperator):
 
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/shape-organseg:{default_build_version}
+            image=f"{default_registry}/shape-organseg:{default_build_version}",
             name="organ-segmentation",
             parallel_id=parallel_id,
             image_pull_secrets=["registry-secret"],

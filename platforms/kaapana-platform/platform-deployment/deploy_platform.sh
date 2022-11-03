@@ -8,10 +8,10 @@ export HELM_EXPERIMENTAL_OCI=1
 ######################################################
 
 PROJECT_NAME="kaapana-platform-chart" # name of the platform Helm chart
-KAAPANA_BUILD_VERSION="0.1.3-120-g12c7b503"    # version of the platform Helm chart -> auto-generated
+KAAPANA_BUILD_VERSION="0.1.3-121-gb956665c"    # version of the platform Helm chart -> auto-generated
 BUILD_TIMESTAMP="03-11-2022"    # timestamp of the build-time -> auto-generated
 KAAPANA_BUILD_BRANCH="new-versioning"    # branch name, which was build from -> auto-generated
-KAAPANA_LAST_COMMT_TIMESTAMP="12c7b5032bcaf1af484000a0bfe76515495d085a" # timestamp of the last commit -> auto-generated
+KAAPANA_LAST_COMMT_TIMESTAMP="b956665c4979c5a768c5f9c32855a7adbf5fb2c2" # timestamp of the last commit -> auto-generated
 
 CONTAINER_REGISTRY_URL="registry.hzdr.de/jonas.scherer/kaapana" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME=""

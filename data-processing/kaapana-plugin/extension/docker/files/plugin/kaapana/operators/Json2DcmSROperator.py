@@ -51,7 +51,7 @@ class Json2DcmSROperator(KaapanaBaseOperator):
 
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/dcmqi:{default_build_version}
+            image=f"{default_registry}/dcmqi:{default_build_version}",
             name="json2dcmSR",
             env_vars=env_vars,
             image_pull_secrets=["registry-secret"],

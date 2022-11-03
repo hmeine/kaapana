@@ -60,7 +60,7 @@ class ZipUnzipOperator(KaapanaBaseOperator):
 
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/zip-unzip:{default_build_version}
+            image=f"{default_registry}/zip-unzip:{default_build_version}",
             name="zip-unzip",
             image_pull_secrets=["registry-secret"],
             env_vars=env_vars,

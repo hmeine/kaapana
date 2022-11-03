@@ -16,7 +16,7 @@ class NnUnetNotebookOperator(KaapanaBaseOperator):
         super().__init__(
             dag=dag,
             name=name,
-            image=f"{default_registry}/nnunet-gpu:{default_build_version}
+            image=f"{default_registry}/nnunet-gpu:{default_build_version}",
             image_pull_secrets=["registry-secret"],
             cmds=["/bin/bash"],
             execution_timeout=execution_timeout,

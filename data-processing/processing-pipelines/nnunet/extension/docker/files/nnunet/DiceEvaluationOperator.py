@@ -28,7 +28,7 @@ class DiceEvaluationOperator(KaapanaBaseOperator):
 
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/dice-evaluation:{default_build_version}
+            image=f"{default_registry}/dice-evaluation:{default_build_version}",
             name=name,
             batch_name=batch_name,
             image_pull_secrets=["registry-secret"],

@@ -11,7 +11,7 @@ class Statistics2PdfOperator(KaapanaBaseOperator):
 
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/statistics2pdf:{default_build_version}
+            image=f"{default_registry}/statistics2pdf:{default_build_version}",
             name="stats2pdf",
             image_pull_secrets=["registry-secret"],
             execution_timeout=execution_timeout,

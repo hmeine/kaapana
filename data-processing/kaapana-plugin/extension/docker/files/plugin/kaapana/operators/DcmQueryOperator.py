@@ -54,7 +54,7 @@ class DcmQueryOperator(KaapanaBaseOperator):
 
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/dcmqr:{default_build_version}
+            image=f"{default_registry}/dcmqr:{default_build_version}",
             name="dcmqr",
             image_pull_secrets=["registry-secret"],
             env_vars=env_vars,

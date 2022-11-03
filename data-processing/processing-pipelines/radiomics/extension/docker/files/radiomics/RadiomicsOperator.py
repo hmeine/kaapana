@@ -23,7 +23,7 @@ class RadiomicsOperator(KaapanaBaseOperator):
         env_vars.update(envs)
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/mitk-radiomics:{default_build_version}
+            image=f"{default_registry}/mitk-radiomics:{default_build_version}",
             name="radiomics",
             env_vars=env_vars,
             image_pull_secrets=["registry-secret"],
