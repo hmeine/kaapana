@@ -54,17 +54,33 @@
         command: list_vms
       register: existing_vms
       changed_when: no
+      
+    - name: Get VM status
+      become: yes
+      community.libvirt.virt:
+        name: "{{ vm_name }}"
+        command: status
+      register: vm_status
+      when: "vm_name in existing_vms.list_vms"
 
     - name: if instance not found
       debug: 
         msg: "Desired VM does NOT already exist!"
       when: "vm_name not in existing_vms.list_vms"
 
-    - name: Create VM if does not exists
-      block:
-      - name: Set libvirt filepath for image
-        set_fact:
-          libvirt_img_filepath: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
+    - name: Set libvirt filepath for image
+      set_fact:
+        libvirt_img_filepath: "{{ libvirt_pool_dir }}/{{ base_image_name }}"
+
+    - name: Create VM if does not exist
+      block:      
+      - name: Fetch desired VM config file from host
+        become: yes
+        ## Currently Ansible doesn't directly support directory/recursive copying from remote to local
+        fetch:
+          src: "{{ vm_config_filepath }}"
+          dest: "{{ vm_config_container_filepath }}"
+          flat: yes
       
       - name: Modify elements/attributes of the VM XML configuration file according to input parameters
         include_tasks: customise_kvm_cfg.yaml
@@ -93,7 +109,6 @@
         command: |
           virt-customize -a {{ libvirt_img_filepath }} \
           --hostname {{ vm_name }} \
-          --root-password password:{{ vm_root_pass }} \
           --ssh-inject 'root:file:{{ ssh_pub_key }}' \
           --uninstall cloud-init \
           --selinux-relabel
@@ -104,15 +119,13 @@
         command: |
           virt-customize -a {{ libvirt_img_filepath }} \
           --hostname {{ vm_name }} \
-          --root-password password:{{ vm_root_pass }} \
-          --ssh-inject 'root:file:{{ ssh_pub_key }}' \
         when: copy_results is changed and not selinux_enabled_os
       
       - name: Define VM
         become: yes
         community.libvirt.virt:
           command: define
-          xml: "{{ lookup('file', '{{ vm_config_filepath }}') }}"
+          xml: "{{ lookup('file', '{{ vm_config_container_filepath }}') }}"
 
       - name: Ensure VM is started
         become: yes
@@ -123,6 +136,10 @@
         until: "vm_start_results is success"
         retries: 15
         delay: 2
+
+      - name: Waiting for VM to be ready so that IP address can be extracted
+        wait_for:
+          timeout: 10
 
       - name: Extract VM's IP address
         become: yes
@@ -154,12 +171,13 @@
       when: "vm_name not in existing_vms.list_vms and instance_state == 'present'"
 
     - name: Delete the desired VM
-      block:
+      block:        
       - name: Shut the desired VM down before deleting
         become: yes
         community.libvirt.virt:
           name: "{{ vm_name }}"
           command: destroy
+        when: "vm_status.status != 'shutdown' and vm_status != 'crashed'"
 
       - name: Delete the VM
         become: yes
