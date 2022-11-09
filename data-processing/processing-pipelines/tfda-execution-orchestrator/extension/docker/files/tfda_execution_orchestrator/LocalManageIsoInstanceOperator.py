@@ -42,6 +42,8 @@ class LocalManageIsoInstanceOperator(KaapanaPythonBaseOperator):
         if platform_name in "qemu_kvm":
             vault_text_file = platform_config["platforms"][platform_name]["platform_flavors"][flavor_name]["vault_text_file"]
             vault_filepath = os.path.join(playbooks_dir, vault_text_file)
+            if not os.path.isfile(vault_filepath):
+                raise AirflowFailException(f"Vault file {vault_filepath} for password not found in playbooks directory, please create it first!")
             command = ["ansible-playbook", f"--vault-password-file={vault_filepath}", playbook_path, "--extra-vars", playbook_args]
         else:
             command = ["ansible-playbook", playbook_path, "--extra-vars", playbook_args]
