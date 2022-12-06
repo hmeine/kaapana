@@ -1,7 +1,7 @@
 
 from datetime import datetime
 from datetime import timedelta
-from kaapana.operators.KaapanaBaseOperator import KaapanaBaseOperator, default_registry, kaapana_build_version
+from kaapana.operators.KaapanaBaseOperator import KaapanaBaseOperator, default_registry, default_platform_abbr, default_platform_version
 
 class Itk2DcmSegOperator(KaapanaBaseOperator):
     """
@@ -63,7 +63,7 @@ class Itk2DcmSegOperator(KaapanaBaseOperator):
             "MULTI_LABEL_SEG_INFO_JSON": multi_label_seg_info_json, # name of json file inside OPERATOR_IMAGE_LIST_INPUT_DIR that contains the organ seg infos e.g. {"seg_info": ["spleen", "right@kidney"]}
             # Always relevant:
             "MULTI_LABEL_SEG_NAME": multi_label_seg_name,  # Name used for multi-label segmentation object, if it will be created
-            "OPERATOR_IMAGE_LIST_INPUT_DIR":  segmentation_operator.operator_out_dir, # directory that contains segmentaiton objects
+            # "OPERATOR_IMAGE_LIST_INPUT_DIR":  segmentation_operator.operator_out_dir, # directory that contains segmentaiton objects
             "SERIES_DISCRIPTION": "{}".format(series_description or alg_name or 'UNKOWN SEGMENTATION ALGORITHM'),
             "ALGORITHM_NAME": f'{alg_name or "kaapana"}',
             "CREATOR_NAME": creator_name,
@@ -75,14 +75,26 @@ class Itk2DcmSegOperator(KaapanaBaseOperator):
         }
         env_vars.update(envs)
 
+        if segmentation_operator is None and segmentation_in_dir is not None:
+            env_vars['OPERATOR_IMAGE_LIST_INPUT_DIR'] = str(segmentation_in_dir)
+        else:
+            if segmentation_operator is not None and segmentation_in_dir is None:
+                env_vars['OPERATOR_IMAGE_LIST_INPUT_DIR'] = str(segmentation_operator.operator_out_dir)
+            else:
+                raise NameError('Either segmentation_operator or operator_in_dir has to be set.')
+        if config_file:
+            env_vars['config_file'] = config_file
+        name = name if name is not None else 'Itk2DcmSeg'
+        
+
         super().__init__(
             dag=dag,
-            image=f"{default_registry}/dcmqi:{kaapana_build_version}",
+            image=f"{default_registry}/dcmqi:{default_platform_abbr}_{default_platform_version}__v1.2.4",
             name="nrrd2dcmseg",
             env_vars=env_vars,
             image_pull_secrets=["registry-secret"],
             execution_timeout=execution_timeout,
-            ram_mem_mb=6000,
-            ram_mem_mb_lmt=12000,
+            ram_mem_mb=3000,
+            ram_mem_mb_lmt=6000,
             **kwargs
             )
