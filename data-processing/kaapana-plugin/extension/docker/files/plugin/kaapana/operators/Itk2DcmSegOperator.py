@@ -86,6 +86,8 @@ class Itk2DcmSegOperator(KaapanaBaseOperator):
                 raise NameError('Either segmentation_operator or operator_in_dir has to be set.')
         if config_file:
             env_vars['config_file'] = config_file
+    
+        name = kwargs.get("name")
         name = name if name is not None else 'Itk2DcmSeg'
         
 
