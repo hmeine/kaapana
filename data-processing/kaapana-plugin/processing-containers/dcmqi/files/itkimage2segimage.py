@@ -249,7 +249,7 @@ DCMQI = '/app/dcmqi/bin'
 # If input type is set to "multi_label_seg" you must create a json inside the OPERATOR_IMAGE_LIST_INPUT_DIR that contains the parts as follows: {"seg_info": ["spleen", "right@kidney"]}
 
 input_type = os.environ.get('INPUT_TYPE')  # multi_label_seg or single_label_segs
-multi_label_seg_name = os.environ.get('MULTI_LABEL_SEG_NAME') if os.environ.get('MULTI_LABEL_SEG_NAME') not in [None, "None"] else 'multi-label'  # Name used for multi-label segmentation object, if it will be created
+multi_label_seg_name = os.environ.get('MULTI_LABEL_SEG_NAME') if os.environ.get('MULTI_LABEL_SEG_NAME') not in [None, "None", ''] else 'multi-label'  # Name used for multi-label segmentation object, if it will be created
 segment_algorithm_name = os.environ.get('ALGORITHM_NAME', 'kaapana')
 segment_algorithm_type = os.environ.get('ALGORITHM_TYPE', 'AUTOMATIC')
 content_creator_name = os.environ.get('CREATOR_NAME', 'kaapana')
