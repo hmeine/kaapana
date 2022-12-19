@@ -19,6 +19,7 @@ class Itk2DcmSegOperator(KaapanaBaseOperator):
     """
     def __init__(self,
                  dag,
+                 name="nrrd2dcmseg",
                  segmentation_in_dir=None,
                  segmentation_operator=None,
                  config_file=None,
@@ -87,8 +88,8 @@ class Itk2DcmSegOperator(KaapanaBaseOperator):
         if config_file:
             env_vars['config_file'] = config_file
     
-        name = kwargs.get("name")
-        name = name if name is not None else 'Itk2DcmSeg'
+        # name = kwargs.get("name")
+        # name = name if name is not None else 'Itk2DcmSeg'
         
 
         super().__init__(
