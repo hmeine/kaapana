@@ -21,6 +21,7 @@ class Itk2DcmSegOperator(KaapanaBaseOperator):
                  dag,
                  segmentation_in_dir=None,
                  segmentation_operator=None,
+                 config_file=None,
                  input_type='single_label_segs',
                  alg_name= None,
                  creator_name="kaapana",
