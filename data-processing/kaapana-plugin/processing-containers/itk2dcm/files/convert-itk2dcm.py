@@ -55,8 +55,12 @@ class Nifti2DcmConverter:
     not include all necessary meta information, it is possible to provide additional meta information 
     on a 'per study' basis. (See __call__(self, ...))
     """
-    def __init__(self):
+    def __init__(self, meta_data=None):
         self.parser = Parser()
+        # self.meta_data = meta_data
+        # self.series_tag_values = {}
+
+        
     
     def __call__(self, path, meta_data=None):
         """ Run the converter on a path with the following directory structure:
@@ -78,13 +82,12 @@ class Nifti2DcmConverter:
         |    | series2_seg.nii.gz
         |    | ...
 
-        The meta_data.json can be used to set values for study ids, series ids, patient names and additional dicom tags. The expected structure is as follows:
+        The meta_data.json can be used to set values for patient ids, study uids, series ids and also arbitrary dicom tags. The expected structure is as follows:
 
         {
             'Patients': 'all_same' | 'all_different' | [name1, name2, ..., nameN],
             'Study UIDs': 'all_same' | 'all_different' | [study1, study2, ..., studyN],
-            'Study IDs': 'all_same' | 'all_different' | [study_uid1, study_uid2, ..., study_uidN], # TODO: probably just dont use them 
-            'Modality': modality,   # see (0008,0060)
+            'Modality': 'MR' | 'CT' | 'OT' | ...   # any valid value listed under dicom tag (0008,0060) 
             'Series instance UID': [series_instance_uid1, series_instance_uid1, ..., series_instance_uidN]
             'Series descriptions': some_description | [desc1, desc2, ..., descN],
             
@@ -104,15 +107,15 @@ class Nifti2DcmConverter:
             }
 
         }
-
+        All fields are optional, but it is highly recommended, to at least set the modality since the default is set to "OT" i.e. "Other" which will omit necessary positioning data for image processing.
         The field "add_tags" allows to set specific tags on all series matching the given file name pattern. At the moment this is just a simple glob pattern matching.
-        If needed we could also add regex syntax here, but right for now this seems unnecessarily complex.
+        If needed we could also add regex syntax here, but for now this seems unnecessarily complex.
 
         The 'seg_args' parameter passes arguments to the Itk2DcmSegOperator which is responsible for the conversion of the segmentation objects if any are present.
         If there are no segmentation files 'seg_args' will be ignored.
-        TODO: In theory it would be possible to derive a minimal set of segmentation args from the given files. Probably nice to have in the future.
-
         """
+        # TODO: In theory it would be possible to derive a minimal set of segmentation args from the given files. Probably nice to have in the future.
+
         datasets = next(os.walk(path))[1]
 
         for dataset in datasets:
@@ -152,13 +155,9 @@ class Nifti2DcmConverter:
             assert(isinstance(study_instance_UIDs, list))
             assert(len(study_instance_UIDs) == len(patients))
 
-
-        # study_instance_UIDs = meta_data.get("Study UIDs") if meta_data.get("Study UIDs") else 
-        # study_ids = meta_data.get("Study IDs") if meta_data.get("Study IDs") else str(path).split("/")[-1]
         
         series_descriptions = meta_data.get("Series Descriptions") if meta_data.get("Series descriptions") else [None for _ in range(len(cases))]
         modality = meta_data.get("Modality") if meta_data.get("Modality") else "OT"
-        # seg_info = meta_data.get("seg_info")
         added_tags = meta_data.get("add_tags")
         
         seg_args = None
@@ -185,6 +184,7 @@ class Nifti2DcmConverter:
             series_tag_values = {}
             # series_tag_values["0020|0010"] = # study_id
             series_tag_values["0020|000d"] = study_instance_UIDs[i]
+            series_tag_values["0020|0011"] = i
             if added_tags is not None:
                 for p in added_tags.keys():
                     p = f"/{p}" if p[0] != "/" else p
