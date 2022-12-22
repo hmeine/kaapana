@@ -27,19 +27,10 @@ const routes = [
         },
     },
     {
-        name: 'tdfadashboard',
-        path: '/tdfadashboard',
-        component: () => import('@/views/TFDA.vue'),
-        title: 'TFDA Dashboard',
-        permissions: {
-            isPublic: false,
-        },
-    },
-    {
-        name: 'status',
-        path: '/status',
-        component: () => import('@/views/TFDAStatus.vue'),
-        title: 'TFDA Status',
+        name: 'experiments',
+        path: '/experiments',
+        component: () => import('@/views/Experiments.vue'),
+        title: 'Experiment',
         permissions: {
             isPublic: false,
         },

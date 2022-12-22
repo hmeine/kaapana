@@ -134,7 +134,13 @@ function delete_all_images_microk8s {
 }
 
 function get_domain {
-    DOMAIN=$(hostname -f)
+
+    if [ -z ${DOMAIN+x} ]; then
+        echo -e ""
+        DOMAIN=$(hostname -f)
+    else
+        echo -e "${GREEN}Server domain (FQDN): $DOMAIN ${NC}" > /dev/stderr;
+    fi
 
     if [ ! "$QUIET" = "true" ];then
         echo -e ""
@@ -798,6 +804,13 @@ do
             shift # past value
         ;;
 
+        -d|--domain)
+            DOMAIN="$2"
+            echo -e "${GREEN}SET DOMAIN!${NC}";
+            shift # past argument
+            shift # past value
+        ;;
+
         --port)
             HTTPS_PORT="$2"
             echo -e "${GREEN}SET PORT!${NC}";
@@ -845,6 +858,17 @@ do
             echo -e "${YELLOW}Using --no-hooks${NC}"
             delete_deployment
             clean_up_kubernetes
+            exit 0
+        ;;
+
+        --undeploy)
+            delete_deployment
+            exit 0
+        ;;
+
+        --re-deploy)
+            delete_deployment
+            deploy_chart
             exit 0
         ;;
 

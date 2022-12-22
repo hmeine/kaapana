@@ -24,7 +24,7 @@
           v-list-item-action
             v-icon mdi-controller-classic
           v-list-item-content
-            v-list-item-title Experiments
+            v-list-item-title Experiment Management
           v-list-item-icon
         v-list-item(:to="'/federated'", v-if="isAuthenticated && federatedBackendAvailable")
           v-list-item-action
@@ -50,12 +50,6 @@
           v-list-item-content
             v-list-item-title Extensions
           v-list-item-icon
-        v-list-item(:to="'/tdfadashboard'", v-if="isAuthenticated")
-          v-list-item-action
-            v-icon mdi-security
-          v-list-item-content
-            v-list-item-title TFDA
-          v-list-item-icon
     v-app-bar(color="primary" dark dense clipped-left app)
       v-app-bar-nav-icon(@click.stop="drawer = !drawer")
       v-toolbar-title {{ commonData.name }}
@@ -80,7 +74,7 @@
           v-flex(text-xs-center)
             router-view
     v-footer(color="primary" app inset)
-      span.white--text &copy; DKFZ 2018 - DKFZ 2022 | {{commonData.version}}
+      span.white--text &copy; DKFZ 2018 - DKFZ 2022: Version {{commonData.version}}
 </template>
 
 
