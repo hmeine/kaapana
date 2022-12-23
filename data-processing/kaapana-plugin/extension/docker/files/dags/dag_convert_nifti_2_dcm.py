@@ -26,6 +26,12 @@ ui_forms = {
                 "type": "boolean",
                 "default": False,
                 "readOnly": False,
+            },
+            "data_dir":{
+                "title": "Data directory",
+                "description": "Directory containing the dataset.",
+                "type": "string",
+                "default": "BMC"
             }
         }
     }

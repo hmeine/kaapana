@@ -304,8 +304,9 @@ for batch_element_dir in batch_folders:
     if len(segmentation_paths) == 0:
         print("Could not find valid segmentation file in {}".format(input_image_list_input_dir))
         print("Supported: '*.nii', '*.nii.gz', '*.nrrd'")
-        print("abort!")
-        exit(1)
+        print("skipping!")
+        # exit(1)
+        continue
 
     segmentation_information = {
         "@schema": "https://raw.githubusercontent.com/qiicr/dcmqi/master/doc/schemas/seg-schema.json#"

@@ -13,6 +13,7 @@ import warnings
 
 # import pydicom
 # import pydicom_seg
+
 import SimpleITK as sitk
 
 from pathlib import Path
@@ -55,8 +56,9 @@ class Nifti2DcmConverter:
     not include all necessary meta information, it is possible to provide additional meta information 
     on a 'per study' basis. (See __call__(self, ...))
     """
-    def __init__(self, meta_data=None):
+    def __init__(self, meta_data=None, seed=42):
         self.parser = Parser()
+        self.seed = str(seed)
         # self.meta_data = meta_data
         # self.series_tag_values = {}
 
@@ -66,7 +68,7 @@ class Nifti2DcmConverter:
         """ Run the converter on a path with the following directory structure:
 
         path
-        |----study1
+        |----dataset1
         |    | meta_data.json
         |    | series1.nii.gz
         |    | series1_seg.nii.gz
@@ -74,7 +76,7 @@ class Nifti2DcmConverter:
         |    | series2_seg.nii.gz
         |    | ...
         |
-        |----study2
+        |----dataset2
         |    | meta_data.json
         |    | series1.nii.gz
         |    | series1_seg.nii.gz
@@ -116,26 +118,44 @@ class Nifti2DcmConverter:
         """
         # TODO: In theory it would be possible to derive a minimal set of segmentation args from the given files. Probably nice to have in the future.
 
-        datasets = next(os.walk(path))[1]
+        
 
-        for dataset in datasets:
-            if dataset != "BMC":
-                continue
-            try:
-                with open(os.path.join(f"/{path}", dataset,"meta_data.json"), "r") as meta_file:
-                    meta_data = json.load(meta_file)
-            except FileNotFoundError:
-                meta_data = {}
-            self.convert_dataset(Path(path) / dataset, meta_data)
+        
+        # code for running multiple datasets
+        # unfotunately this is impossible due to the structure of the dcmSeg operator
+
+        # datasets = next(os.walk(path))[1]
+        # for dataset in datasets:
+            # if dataset != "BMC":
+            #     continue
+            # try:
+            #     with open(os.path.join(f"/{path}", dataset,"meta_data.json"), "r") as meta_file:
+            #         meta_data = json.load(meta_file)
+            # except FileNotFoundError:
+            #     meta_data = {}
+            # self.convert_dataset(Path(path) / dataset, meta_data)
+
+        # code for running on a single datset
+        with open("/data/conf/conf.json", 'r') as conf_file:
+            workflow_conf = json.load(conf_file)
+
+        dataset = workflow_conf.get("workflow_form").get("data_dir")
+        try:
+            with open(os.path.join(f"/{path}",dataset, "meta_data.json"), "r") as meta_file:
+                meta_data = json.load(meta_file)
+        except FileNotFoundError:
+            meta_data = {}
+        self.convert_dataset(Path(path)/dataset, meta_data)
+
 
     def convert_dataset(self, path, meta_data={}):
 
         cases = self.parser(path, log='Info')
 
         patients = meta_data.get("Patients") if meta_data.get("Patients") else "all_different"
-
+        # series_filenames = glob.glob()
         if patients == 'all_same':
-            patients = ['single_patient' for _ in len(cases)]
+            patients = ['single_patient' for _ in range(len(cases))]
         elif patients == 'all_different':
             patients = [f'patient_{i}' for i in range(len(cases))]
         else:
@@ -148,9 +168,9 @@ class Nifti2DcmConverter:
         # generate study uids
         study_instance_UIDs = meta_data.get("Study UIDs", 'all_same')
         if study_instance_UIDs == "all_same":
-            study_instance_UIDs = [generate_uid(entropy_srcs=[str(patients[i])]) for i in range(len(patients))]
+            study_instance_UIDs = [generate_uid(entropy_srcs=[str(patients[i]), self.seed]) for i in range(len(patients))]
         elif study_instance_UIDs == "all_different":
-            study_instance_UIDs = [generate_uid() for i in range(len(patients))]
+            study_instance_UIDs = [generate_uid(entropy_srcs=[str(patients[i]), str(case[0]), self.seed]) for i,case in enumerate(cases)]
         else:
             assert(isinstance(study_instance_UIDs, list))
             assert(len(study_instance_UIDs) == len(patients))
@@ -172,19 +192,17 @@ class Nifti2DcmConverter:
                 print("No arguments for Itk2DcmSegOperator found. Please provide 'seg_args' in the 'meta_data.json'.")
             
             # check if there is an seg_info file
-            if not os.path.isfile(path/'seg_info.json'):
-                raise FileNotFoundError("The study contains segmentation files, but no 'seg_info.json' file was found. Please add a 'seg_info.json' to each study directory.")
+            # if not os.path.isfile(path/'seg_info.json'):
+            #     raise FileNotFoundError("The study contains segmentation files, but no 'seg_info.json' file was found. Please add a 'seg_info.json' to each study directory.")
             else:
                 pass
 
-
-        
 
         for i, case in enumerate(cases):
             series_tag_values = {}
             # series_tag_values["0020|0010"] = # study_id
             series_tag_values["0020|000d"] = study_instance_UIDs[i]
-            series_tag_values["0020|0011"] = i
+            series_tag_values["0020|0011"] = str(i)
             if added_tags is not None:
                 for p in added_tags.keys():
                     p = f"/{p}" if p[0] != "/" else p
@@ -221,7 +239,7 @@ class Nifti2DcmConverter:
 
 
         study_uid = series_tag_values['0020|000d']
-        series_instance_UID = kwds.get("series_uid") or generate_uid(entropy_srcs=[patient_id, study_uid, series_id, seed])
+        series_instance_UID = kwds.get("series_uid") or generate_uid(entropy_srcs=[patient_id, study_uid, series_id, self.seed])
         out_dir = make_out_dir(series_instance_UID, dataset=dataset, case=series_id, segmentation=segmentation, human_readable=False)
 
         new_img = sitk.ReadImage(case_path) 
@@ -281,7 +299,7 @@ class Nifti2DcmConverter:
         series_uid = series_tag_values["0020|000e"]
 
         prefix = ".".join(series_uid.split(".")[:4])+"." # ugly syntax for strap the prefix from the series uid and reuse it for slice identifier but w/e
-        slice_instance_uid = generate_uid(prefix=prefix, entropy_srcs=[patient_id, study_uid, series_uid, str(i)])
+        slice_instance_uid = generate_uid(prefix=prefix, entropy_srcs=[patient_id, study_uid, series_uid, str(i), self.seed])
 
         series_tag_values["0008|0018"] = slice_instance_uid
 
