@@ -57,7 +57,7 @@ dag = DAG(
 
 
 bucket_name='uploads'
-upload_folder_tree = 'prostate_mri'
+upload_folder_tree = 'itk'
 
 get_data_from_minio = LocalMinioOperator(
     action='get',
