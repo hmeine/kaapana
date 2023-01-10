@@ -14,7 +14,45 @@ v-dialog(v-model='dialogOpen' max-width='600px')
               v-text-field(v-model='experiment_name' label='Experiment name' required='')
             v-col(v-if="remote" cols='12')
               v-select(v-model='instance_names' :items='available_instance_names' label='Instance names' multiple='' chips='' hint='On which nodes do you want to execute the workflow')
-            v-col(v-if="instance_names.length" cols='12')
+            v-col(cols='12') 
+             
+              <v-radio-group v-model="radio_isolation" column>
+                <template v-slot:label>
+                  <div>Do you want to run your workflow in <strong>Isolation ?</strong></div>
+                </template>
+                <v-radio value="No">
+                  <template v-slot:label>
+                    <div>No</div>
+                  </template>
+                </v-radio>
+                <v-radio value="Yes">
+                  <template v-slot:label>
+                    <div>Yes</div>
+                  </template>
+                </v-radio>
+              </v-radio-group>
+            v-col(cols='12') 
+             <v-radio-group v-model="radio_wf_type" row>
+               <template v-slot:label>
+                 <div>Workflow Type:</div>
+               </template>
+               <v-radio value="dags">
+                 <template v-slot:label>
+                   <div>Dags</div>
+                 </template>
+               </v-radio>
+               <v-radio value="bash">
+                 <template v-slot:label>
+                   <div>Bash Script</div>
+                 </template>
+               </v-radio>
+               <v-radio value="docker">
+                 <template v-slot:label>
+                   <div>Docker Container</div>
+                 </template>
+               </v-radio>
+             </v-radio-group>
+            v-col(v-if="instance_names.length && radio_wf_type!=='bash' && radio_wf_type!=='docker' " cols='12')
               v-select(v-model='dag_id' :items='available_dags' label='Dags' chips='' hint='Select a dag')
             //- v-if="!(remote==false && name=='federated_form')"
             v-col(v-for="(schema, name) in schemas" cols='12')
@@ -40,6 +78,9 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                 pre.text-left Dag id: {{dag_id}}
                 pre.text-left Instance name: {{instance_names}}
                 pre.text-left External instance name: {{external_instance_names}}
+                pre.text-left Isolation: {{radio_isolation}}
+                pre.text-left Workflow Type: {{radio_wf_type}}
+
                 pre.text-left {{ formDataFormatted }}
       v-card-actions
         v-btn(color="primary", @click="submitWorkflow()"  dark) Start Experiment
@@ -74,6 +115,8 @@ export default {
     showConfData: false,
     federated_data: false,
     remote_data:false,
+    radio_isolation: 'No',
+    radio_wf_type: 'dags',
   }),
   props: {
     remote: {
