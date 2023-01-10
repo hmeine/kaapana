@@ -18,7 +18,9 @@ v-dialog(v-model='dialogOpen' max-width='600px')
              
               <v-radio-group v-model="radio_isolation" column>
                 <template v-slot:label>
-                  <div>Do you want to run your workflow in <strong>Isolation ?</strong></div>
+                  <div>Do you want to run your workflow in <strong>Isolation ?</strong></div> 
+                  //-v-icon mdi-information
+                  
                 </template>
                 <v-radio value="No">
                   <template v-slot:label>
@@ -34,7 +36,8 @@ v-dialog(v-model='dialogOpen' max-width='600px')
             v-col(cols='12') 
              <v-radio-group v-model="radio_wf_type" row>
                <template v-slot:label>
-                 <div>Workflow Type:</div>
+                 <div>Workflow Type:</div> 
+                   
                </template>
                <v-radio value="dags">
                  <template v-slot:label>
@@ -52,8 +55,19 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                  </template>
                </v-radio>
              </v-radio-group>
+            v-col(v-if="radio_wf_type =='bash'" cols='12')
+              v-text-field(v-model='bash_url' label='Enter URL to download (.zip format) bash and supporting scripts' required='')
+            v-col(v-if="radio_wf_type=='docker'" cols='12')
+              v-text-field(v-model='docker_registry' label='Enter docker registry' required='')
+              v-text-field(v-model='docker_uname' label='Enter docker registry username' required='')
+              v-text-field(v-model='docker_pwd' label='Enter docker registry password' required='')
+            //-v-col(v-if="radio_wf_type!=='docker'" cols='12')
+              
+            //-v-col(v-if="radio_wf_type!=='docker'" cols='12')
+             
             v-col(v-if="instance_names.length && radio_wf_type!=='bash' && radio_wf_type!=='docker' " cols='12')
               v-select(v-model='dag_id' :items='available_dags' label='Dags' chips='' hint='Select a dag')
+            
             //- v-if="!(remote==false && name=='federated_form')"
             v-col(v-for="(schema, name) in schemas" cols='12')
               p {{name}}
@@ -117,6 +131,10 @@ export default {
     remote_data:false,
     radio_isolation: 'No',
     radio_wf_type: 'dags',
+    bash_url: null,
+    docker_registry: null,
+    docker_uname: null,
+    docker_pwd: null,
   }),
   props: {
     remote: {
