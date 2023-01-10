@@ -56,7 +56,7 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                </v-radio>
              </v-radio-group>
             v-col(v-if="radio_wf_type =='bash'" cols='12')
-              v-text-field(v-model='bash_url' label='Enter URL to download (.zip format) bash and supporting scripts' required='')
+              v-text-field(v-model='bash_url' label='Enter URL to download bash and supporting scripts (.zip format)' required='')
             v-col(v-if="radio_wf_type=='docker'" cols='12')
               v-text-field(v-model='docker_registry' label='Enter docker registry' required='')
               v-text-field(v-model='docker_uname' label='Enter docker registry username' required='')
@@ -94,6 +94,10 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                 pre.text-left External instance name: {{external_instance_names}}
                 pre.text-left Isolation: {{radio_isolation}}
                 pre.text-left Workflow Type: {{radio_wf_type}}
+                pre.text-left Bash Url: {{bash_url}}
+                pre.text-left Docker Registry: {{docker_registry}}
+                pre.text-left Docker Uname: {{docker_uname}}
+                pre.text-left Docker Pwd: {{docker_pwd}}
 
                 pre.text-left {{ formDataFormatted }}
       v-card-actions
