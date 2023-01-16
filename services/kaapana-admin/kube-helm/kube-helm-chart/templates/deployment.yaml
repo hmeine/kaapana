@@ -57,7 +57,12 @@ spec:
         volumeMounts:
           - name: helmextensions
             mountPath: "/root/extensions"
+          - name: containerd-socket
+            mountPath: "/root/containerd.sock"
       volumes:
+      - name: containerd-socket
+        hostPath:
+          path: /var/snap/microk8s/common/run/containerd.sock
       - name: helmextensions
         hostPath:
           path: "{{ $.Values.global.fast_data_dir }}/extensions"
