@@ -20,8 +20,7 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                 <template v-slot:label>
                   <div>Do you want to run your workflow in <strong>Isolation ?</strong></div> 
                   //-v-icon mdi-information
-              v-col(v-if="instance_names.length && radio_wf_type!=='bash' && radio_wf_type!=='docker' " cols='12')
-                v-select(v-model='dag_id' :items='available_dags' label='Choose Minio Bucket' chips='' hint='Select a Bucket') 
+                  
                 </template>
                 <v-radio value="No">
                   <template v-slot:label>
@@ -125,7 +124,6 @@ export default {
     formData: {},
     // formDataFormatted: {},
     available_dags: [],
-    available_minio_buckets: [],
     instance_names: [],
     external_instance_names: [],
     external_dag_id: null,
@@ -176,7 +174,6 @@ export default {
     },
     instance_names() {
       this.getDags()
-      this.getBuckets()
       this.resetFormData()
     },
     experiment_name() {
@@ -285,17 +282,6 @@ export default {
         .then((response) => {
           this.available_dags = response.data;
           console.log("Available DAGs: ", this.available_dags)
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    },
-    getBuckets() {
-      kaapanaApiService
-        .minioApiget("/buckets")
-        .then((response) => {
-          this.available_minio_buckets = JSON.stringify(response.data);
-          console.log("Available Buckets !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: ", this.available_minio_buckets)
         })
         .catch((err) => {
           console.log(err);
