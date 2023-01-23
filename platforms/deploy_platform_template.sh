@@ -383,7 +383,6 @@ function deploy_chart {
     --set-string global.kaapana_collections[{{loop.index0}}].version="{{ item.version }}" \
     {% endfor -%}
     --set-string global.offline_mode="$OFFLINE_MODE" \
-    --set-string global.platform_version="$chart_version" \
     --set-string global.prefetch_extensions="$PREFETCH_EXTENSIONS" \
     {% for item in preinstall_extensions -%}
     --set-string global.preinstall_extensions[{{loop.index0}}].name="{{ item.name }}" \

@@ -458,7 +458,6 @@ class Container:
                     if "image=" in line and "{default_registry}" in line:
                         line = line.rstrip('\n').split("\"")[1].replace(" ", "")
                         line = line.replace("{kaapana_build_version}", BuildUtils.kaapana_build_version)
-                        line = line.replace("{platform_version}", BuildUtils.main_build_version)
                         container_id = line.replace("{default_registry}", BuildUtils.default_registry)
                         self.operator_containers.append(container_id)
 

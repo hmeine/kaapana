@@ -26,7 +26,6 @@ class BuildUtils:
     push_to_microk8s = None
     kaapana_build_version = None
     kaapana_build_branch = None
-    main_build_version = None
     kaapana_last_commit_timestamp = None
     build_timestamp = None
     parallel_processes = None
@@ -77,10 +76,6 @@ class BuildUtils:
         BuildUtils.kaapana_build_branch = kaapana_build_branch
         BuildUtils.kaapana_build_version = kaapana_build_version
         
-        BuildUtils.main_build_version = kaapana_build_version
-        if parent_repo_version is not None:
-            BuildUtils.main_build_version = parent_repo_version
-
         BuildUtils.registry_user = registry_user
         BuildUtils.registry_pwd = registry_pwd
         BuildUtils.include_credentials = include_credentials
@@ -88,7 +83,6 @@ class BuildUtils:
         BuildUtils.parallel_processes = parallel_processes
 
         BuildUtils.logger.debug(f"{BuildUtils.kaapana_dir=}")
-        BuildUtils.logger.debug(f"{BuildUtils.main_build_version=}")
         BuildUtils.logger.debug(f"{BuildUtils.kaapana_build_branch=}")
         BuildUtils.logger.debug(f"{BuildUtils.kaapana_build_version=}")
         BuildUtils.logger.debug(f"{BuildUtils.parallel_processes=}")
