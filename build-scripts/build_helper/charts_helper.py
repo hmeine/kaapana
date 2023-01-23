@@ -16,6 +16,11 @@ from multiprocessing.pool import ThreadPool
 import networkx as nx
 
 suite_tag = "Charts"
+platform_name = None
+platform_build_version = "BUILD_VERSION"
+platform_build_branch = None
+platform_last_commit_timestamp = None
+
 os.environ["HELM_EXPERIMENTAL_OCI"] = "1"
 
 
@@ -48,14 +53,11 @@ def generate_deployment_script(platform_chart):
         return
 
     platform_params = yaml.load(open(deployment_script_config_path[0]), Loader=yaml.FullLoader)
-    platform_params["project_name"] = platform_chart.name
-    platform_params["build_timestamp"] = BuildUtils.build_timestamp
-    platform_params["platform_build_version"] = platform_chart.version
-    platform_params["platform_build_branch"] = platform_chart.build_branch
-    platform_params["platform_last_commit_timestamp"] = platform_chart.last_commit_timestamp
-    platform_params["kaapana_build_version"] = BuildUtils.kaapana_build_version
-    platform_params["kaapana_build_branch"] = BuildUtils.kaapana_build_branch
-    platform_params["kaapana_last_commit_timestamp"] = BuildUtils.kaapana_last_commit_timestamp
+    platform_params["platform_name"] = platform_name
+    platform_params["platform_build_version"] = platform_build_version
+    platform_params["platform_build_branch"] = platform_build_branch
+    platform_params["platform_last_commit_timestamp"] = platform_last_commit_timestamp
+    platform_params["platform_build_version"] = platform_build_version
 
     platform_params["container_registry_url"] = BuildUtils.default_registry
     if BuildUtils.include_credentials:
@@ -309,10 +311,9 @@ class HelmChart:
         if "version" in self.chart_yaml and self.chart_yaml["version"] != "0.0.0":
             self.version = self.chart_yaml["version"]
         else:
-            chart_build_version, chart_build_branch, chart_last_commit, chart_last_commit_timestamp, parent_repo_version = BuildUtils.get_repo_info(self.chart_dir)
-            self.version = chart_build_version
-            self.build_branch = chart_build_branch
-            self.last_commit_timestamp = chart_last_commit_timestamp
+            self.version = platform_build_version
+            self.build_branch = platform_build_branch
+            self.last_commit_timestamp = platform_last_commit_timestamp
 
         self.ignore_linting = False
         if "ignore_linting" in self.chart_yaml:
@@ -388,7 +389,7 @@ class HelmChart:
                 for test in BuildUtils.charts_available:
                     print(f"{test.name}-{test.version}")
 
-                chart_available = [x for x in BuildUtils.charts_available if f"{x.name}-{x.version}" == f"{dependency_name}-{BuildUtils.kaapana_build_version}"]
+                chart_available = [x for x in BuildUtils.charts_available if f"{x.name}-{x.version}" == f"{dependency_name}-{platform_build_version}"]
                 if len(chart_available) == 1:
                     found_in_submodule = True
                     dep_chart = chart_available[0]
@@ -531,13 +532,10 @@ class HelmChart:
 
     def check_container_use(self):
         BuildUtils.logger.debug(f"{self.chart_id}: check_container_use")
-        if self.is_dag:
-            build_version = BuildUtils.kaapana_build_version
-        else:
-            build_version, build_branch, last_commit, last_commit_timestamp, parent_repo_version = BuildUtils.get_repo_info(self.chart_dir)
 
+        build_version = platform_build_version
         if self.kaapana_type == "extenstion-collection":
-            self.add_container_by_tag(container_tag=f"{BuildUtils.default_registry}/{self.name}:{BuildUtils.kaapana_build_version}")
+            self.add_container_by_tag(container_tag=f"{BuildUtils.default_registry}/{self.name}:{platform_build_version}")
 
         elif self.values_yaml != None:  # if self.kaapana_type == "kaapanaworkflow":
             if "global" in self.values_yaml and self.values_yaml["global"] is not None and "image" in self.values_yaml["global"] and self.values_yaml["global"]["image"] != None:
@@ -607,7 +605,7 @@ class HelmChart:
                         else:
                             container_tag = line.replace("}", "").replace("{", "").replace(" ", "").replace("$", "")
                             container_tag = container_tag.replace(".Values.global.registry_url", BuildUtils.default_registry)
-                            container_tag = container_tag.replace(".Values.global.kaapana_build_version", BuildUtils.kaapana_build_version)
+                            container_tag = container_tag.replace(".Values.global.kaapana_build_version", platform_build_version)
                             if "global" in container_tag.lower():
                                 BuildUtils.logger.error(f"Templating could not be resolved for container-ID: {container_tag} ")
                                 BuildUtils.generate_issue(
@@ -833,6 +831,13 @@ class HelmChart:
     @staticmethod
     def build_platform(platform_chart):
         BuildUtils.logger.info(f"-> Start platform-build for: {platform_chart.name}")
+
+        build_version, build_branch, last_commit, last_commit_timestamp = BuildUtils.get_repo_info(platform_chart.chart_dir)
+
+        platform_name = platform_chart.name
+        platform_build_version = build_version
+        platform_build_branch = build_branch
+        platform_last_commit_timestamp = last_commit_timestamp
 
         HelmChart.create_platform_build_files(platform_chart=platform_chart)
         nx_graph = generate_build_graph(platform_chart=platform_chart)

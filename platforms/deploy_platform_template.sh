@@ -7,8 +7,11 @@ export HELM_EXPERIMENTAL_OCI=1
 # Main platform configuration
 ######################################################
 
-PROJECT_NAME="{{ project_name }}" # name of the platform Helm chart
+PLATFORM_NAME="{{ platform_name }}" # name of the platform Helm chart
 PLATFORM_BUILD_VERSION="{{ platform_build_version }}"    # version of the platform Helm chart -> auto-generated
+PLATFORM_BUILD_BRANCH="{{ platform_build_branch }}"    # branch name, which was build from -> auto-generated
+PLATFORM_LAST_COMMT_TIMESTAMP="{{ platform_last_commit_timestamp }}" # timestamp of the last commit -> auto-generated
+PLATFORM_TIMESTAMP="{{ platform_build_timestamp }}"    # timestamp of the build-time -> auto-generated
 
 CONTAINER_REGISTRY_URL="{{ container_registry_url|default('', true) }}" # empty for local build or registry-url like 'dktk-jip-registry.dkfz.de/kaapana' or 'registry.hzdr.de/kaapana/kaapana'
 CONTAINER_REGISTRY_USERNAME="{{ container_registry_username|default('', true) }}"
@@ -26,16 +29,7 @@ PREFETCH_EXTENSIONS="{{ prefetch_extensions|default('false') }}"
 CHART_PATH=""
 NO_HOOKS=""
 
-PLATFORM_BUILD_BRANCH="{{ platform_build_branch }}"    # branch name, which was build from -> auto-generated
-PLATFORM_LAST_COMMT_TIMESTAMP="{{ platform_last_commit_timestamp }}" # timestamp of the last commit -> auto-generated
-
-BUILD_TIMESTAMP="{{ build_timestamp }}"    # timestamp of the build-time -> auto-generated
-KAAPANA_BUILD_VERSION="{{ kaapana_build_version }}"    # version of the platform Helm chart -> auto-generated
-KAAPANA_BUILD_BRANCH="{{ kaapana_build_branch }}"    # branch name, which was build from -> auto-generated
-KAAPANA_LAST_COMMT_TIMESTAMP="{{ kaapana_last_commit_timestamp }}" # timestamp of the last commit -> auto-generated
-
 INSTANCE_UID=""
-
 SERVICES_NAMESPACE="{{ services_namespace }}"
 ADMIN_NAMESPACE="{{ admin_namespace }}"
 JOBS_NAMESPACE="{{ jobs_namespace }}"
