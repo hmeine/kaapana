@@ -46,9 +46,3 @@
     - name: Run the loaded docker container
       command: docker run "{{ user_selected_algo }}"
       register: docker_run
-
-    - debug:
-        var: docker_run
-        verbosity: 2
-
-
