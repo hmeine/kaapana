@@ -29,6 +29,11 @@ class BuildUtils:
     kaapana_last_commit_timestamp = None
     build_timestamp = None
     parallel_processes = None
+    
+    platform_name = None
+    platform_build_version = None
+    platform_build_branch = None
+    platform_last_commit_timestamp = None
 
     @staticmethod
     def add_container_images_available(container_images_available):
@@ -112,7 +117,7 @@ class BuildUtils:
             entry_id = f"{name}:{version}"
 
             if "chart:" in entry:
-                unused_chart = [x_chart for x_key, x_chart in BuildUtils.charts_unused.items() if f"{x_chart.name}:{x_chart.version}" == entry_id]
+                unused_chart = [x_chart for x_key, x_chart in BuildUtils.charts_unused.items() if f"{x_chart.name}:{x_chart.repo_version}" == entry_id]
                 if len(unused_chart) == 1:
                     del BuildUtils.charts_unused[unused_chart[0].name]
                     BuildUtils.logger.debug(f"{entry_id} removed from charts_unused!")

@@ -141,6 +141,7 @@ class Container:
 
         self.image_name = None
         self.image_version = None
+        self.repo_version = None
         self.tag = None
         self.path = dockerfile
         self.ci_ignore = False
@@ -176,7 +177,7 @@ class Container:
                 elif line.__contains__('LABEL IMAGE='):
                     self.image_name = line.split("#")[0].split("=")[1].rstrip().strip().replace("\"", "")
                 elif line.__contains__('LABEL VERSION='):
-                    self.image_version = line.split("#")[0].split("=")[1].rstrip().strip().replace("\"", "")
+                    self.repo_version = line.split("#")[0].split("=")[1].rstrip().strip().replace("\"", "")
                 elif line.startswith('FROM') and not line.__contains__('#ignore'):
                     base_img_tag = line.split("#")[0].split("FROM ")[1].split(" ")[0].rstrip().strip().replace("\"", "")
                     base_img_obj = BaseImage(tag=base_img_tag)
@@ -187,7 +188,7 @@ class Container:
                 elif line.__contains__('LABEL CI_IGNORE='):
                     self.ci_ignore = True if line.split("#")[0].split("=")[1].rstrip().lower().replace("\"", "").replace("'", "") == "true" else False
 
-        if self.image_version == None and self.image_version == "" or self.image_name == None or self.image_name == "":
+        if self.repo_version == None and self.repo_version == "" or self.image_name == None or self.image_name == "":
             BuildUtils.logger.debug(f"{self.container_dir}: could not extract container infos!")
             BuildUtils.generate_issue(
                 component=suite_tag,
@@ -198,15 +199,17 @@ class Container:
             return
 
         else:
+
             self.registry = self.registry if self.registry != None else BuildUtils.default_registry
             if "local-only" in self.registry:
                 self.local_image = True
-                self.image_version = "latest"
+                self.repo_version = "latest"
 
             else:
-                self.image_version = "BUILD_VERSION"
+                build_version, build_branch, last_commit, last_commit_timestamp = BuildUtils.get_repo_info(self.container_dir)
+                self.repo_version = build_version
 
-            self.tag = self.registry+"/"+self.image_name+":"+self.image_version
+            self.tag = self.registry+"/"+self.image_name+":"+self.repo_version
 
         self.check_if_dag()
 
@@ -454,7 +457,7 @@ class Container:
                 for line in python_content:
                     if "image=" in line and "{default_registry}" in line:
                         line = line.rstrip('\n').split("\"")[1].replace(" ", "")
-                        line = line.replace("{kaapana_build_version}", "BUILD_VERSION")
+                        line = line.replace("{kaapana_build_version}", self.repo_version)
                         container_id = line.replace("{default_registry}", BuildUtils.default_registry)
                         self.operator_containers.append(container_id)
 
