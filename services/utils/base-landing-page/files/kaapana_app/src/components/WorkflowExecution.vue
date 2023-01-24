@@ -58,6 +58,8 @@ v-dialog(v-model='dialogOpen' max-width='600px')
              </v-radio-group>
             v-col(v-if="radio_wf_type =='bash'" cols='12')
               v-text-field(v-model='bash_url' label='Enter URL to download bash and supporting scripts (.zip format)' required='')
+            v-col(v-if="radio_wf_type =='bash'" cols='12')
+              v-text-field(v-model='bash_cmd' label='Enter your bash command' required='')
             v-col(v-if="radio_wf_type=='docker'" cols='12')
               v-text-field(v-model='docker_registry' label='Enter docker registry' required='')
               v-text-field(v-model='docker_uname' label='Enter docker registry username' required='')
@@ -96,6 +98,7 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                 pre.text-left Isolation: {{radio_isolation}}
                 pre.text-left Workflow Type: {{radio_wf_type}}
                 pre.text-left Bash Url: {{bash_url}}
+                pre.text-left Bash Cmd: {{bash_cmd}}
                 pre.text-left Docker Registry: {{docker_registry}}
                 pre.text-left Docker Uname: {{docker_uname}}
                 pre.text-left Docker Pwd: {{docker_pwd}}
@@ -111,6 +114,7 @@ import kaapanaApiService from "@/common/kaapanaApi.service";
 import VJsf from "@koumoul/vjsf/lib/VJsf.js";
 import "@koumoul/vjsf/lib/VJsf.css";
 import "@koumoul/vjsf/lib/deps/third-party.js";
+import request from '@/request';
 
 export default {
   name: "WorkflowExecution",
@@ -138,6 +142,7 @@ export default {
     radio_isolation: 'No',
     radio_wf_type: 'dags',
     bash_url: null,
+    bash_cmd: null,
     docker_registry: null,
     docker_uname: null,
     docker_pwd: null,
@@ -312,50 +317,84 @@ export default {
         });
     },
     submitWorkflow() {
-      // modify attributes remote_data and federated_data depending on instances 
-      console.log("instance_names: ", this.instance_names)
-      // if (this.instance_names.length > 1) {                             // len(instance_names) > 1 ==> federated experiment
-      //   this.federated_data = true;
-      //   this.remote_data = true;
-      //   console.log("Federated Experiment -> federated_data:", this.federated_data, ", remote_data: ,", this.remote_data)
-      // }
-      // else {                                                            // len(instance_names) = 1 ==> local or remote experiment
-      this.federated_data = false;
-      console.log("clientinstance.instance_name: ", this.clientinstance.instance_name)
-      console.log("client in instances: ", this.instance_names.indexOf(this.clientinstance.instance_name))
-      if ((this.instance_names.indexOf(this.clientinstance.instance_name) != -1) && (this.instance_names.length == 1)) {  // clientinstance is in instance_names ==> local experiment
-        this.remote_data = false;
-        console.log("Local Experiment -> federated_data:", this.federated_data, ", remote_data: ,", this.remote_data)
+
+      if (this.radio_isolation !== "No") {
+        console.log(
+          "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&  calling TFDA TEST DAG !!!!!!!!!!!!!!!!!!!!!!! "
+        );
+        
+        request.post("/flow/kaapana/api/trigger/dag-tfda-testing-workflow", {
+            
+            'conf': {
+            experiment_name: this.experiment_name,
+            //dag_id: this.dag_id,
+            instance_names: this.instance_names, 
+            radio_wf_type: this.radio_wf_type,
+            bash_url: this.bash_url,
+            bash_cmd: this.bash_cmd,
+            docker_registry: this.docker_registry,
+            docker_uname: this.docker_uname,
+            docker_pwd: this.docker_pwd         
+            //conf_data: this.formatFormData(this.formData),
+            //remote: this.remote_data,
+            //federated: this.federated_data,
+          },
+          })
+          .then((response) => {
+            this.response = JSON.stringify(response.data);
+            console.log(
+              "response from AIRFLWO DAAGAGAGA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: ",
+              this.response
+            );
+          })
+          .catch((err) => {
+            console.log(err);
+          });}
+      else {
+        // modify attributes remote_data and federated_data depending on instances 
+        console.log("instance_names: ", this.instance_names)
+        // if (this.instance_names.length > 1) {                             // len(instance_names) > 1 ==> federated experiment
+        //   this.federated_data = true;
+        //   this.remote_data = true;
+        //   console.log("Federated Experiment -> federated_data:", this.federated_data, ", remote_data: ,", this.remote_data)
+        // }
+        // else {                                                            // len(instance_names) = 1 ==> local or remote experiment
+        this.federated_data = false;
+        console.log("clientinstance.instance_name: ", this.clientinstance.instance_name)
+        console.log("client in instances: ", this.instance_names.indexOf(this.clientinstance.instance_name))
+        if ((this.instance_names.indexOf(this.clientinstance.instance_name) != -1) && (this.instance_names.length == 1)) {  // clientinstance is in instance_names ==> local experiment
+          this.remote_data = false;
+          console.log("Local Experiment -> federated_data:", this.federated_data, ", remote_data: ,", this.remote_data)
+        }
+        else {                                                          // clientinstance is not in instance_names ==> remote experiment
+          this.remote_data = true;
+          console.log("Remote Experiment -> federated_data:", this.federated_data, ", remote_data: ,", this.remote_data)
+        }
+        // }
+        if (this.external_instance_names.length) {
+          this.formData['external_schema_instance_names'] = this.external_instance_names
+          this.federated_data = true
+        }
+        console.log("Experiment executed on: ", this.instance_names)
+        kaapanaApiService
+          // .federatedClientApiPost("/submit-workflow-schema", {
+          .federatedClientApiPost("/experiment", {
+            experiment_name: this.experiment_name,
+            dag_id: this.dag_id,
+            instance_names: this.instance_names,          
+            conf_data: this.formatFormData(this.formData),
+            remote: this.remote_data,
+            federated: this.federated_data,
+          })
+          .then((response) => {
+            this.dialogOpen = false
+            console.log(response);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       }
-      else {                                                          // clientinstance is not in instance_names ==> remote experiment
-        this.remote_data = true;
-        console.log("Remote Experiment -> federated_data:", this.federated_data, ", remote_data: ,", this.remote_data)
-      }
-      // }
-      if (this.external_instance_names.length) {
-        this.formData['external_schema_instance_names'] = this.external_instance_names
-        this.federated_data = true
-      }
-      console.log("Experiment executed on: ", this.instance_names)
-      kaapanaApiService
-        // .federatedClientApiPost("/submit-workflow-schema", {
-        .federatedClientApiPost("/experiment", {
-          experiment_name: this.experiment_name,
-          dag_id: this.dag_id,
-          instance_names: this.instance_names,          
-          conf_data: this.formatFormData(this.formData),
-          remote: this.remote_data,
-          federated: this.federated_data,
-        })
-        .then((response) => {
-          this.dialogOpen = false
-          console.log(response);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  }
+    } }
 };
 </script>
 
