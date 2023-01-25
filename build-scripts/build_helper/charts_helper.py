@@ -341,60 +341,41 @@ class HelmChart:
         if dependency_name in self.dependencies:
             BuildUtils.logger.info(f"{self.chart_id}: check_dependencies {dependency_name} already present.")
 
-        chart_available = [x for x in BuildUtils.charts_available if f"{x.name}-{x.repo_version}" == f"{dependency_name}-{dependency_version}"]
+        charts_found = [x for x in BuildUtils.charts_available if x.name == dependency_name]
+        # chart_available = [x for x in BuildUtils.charts_available if f"{x.name}-{x.repo_version}" == f"{dependency_name}-{dependency_version}"]
 
-        if len(chart_available) == 1:
-            dep_chart = chart_available[0]
+        if len(charts_found) > 1:
+            BuildUtils.logger.warning(f"{self.chart_id}: Dependency-chart {dependency_name} -> multiple charts found -> checking version {dependency_version}")
+            for chart_found in charts_found:
+                BuildUtils.logger.warning(f"{self.chart_id}: Found version {chart_found.repo_version} at {chart_found.chart_dir}")
+            charts_found = [x for x in charts_found if x.name == dependency_name and x.repo_version == dependency_version]
+            BuildUtils.logger.warning(f"{self.chart_id}: Found {len(charts_found)} charts with version: {dependency_version}")
+            
+        if len(charts_found) == 1:
+            dep_chart = charts_found[0]
             self.dependencies[dep_chart.chart_id] = dep_chart
-            BuildUtils.logger.debug(f"{self.chart_id}: dependency found: {dep_chart.chart_id}")
+            BuildUtils.logger.debug(f"{self.chart_id}: dependency found: {dep_chart.chart_id} at {dep_chart.chart_dir}")
         else:
-            BuildUtils.logger.warning(f"{self.chart_id}: check_dependencies failed! {dependency_name}")
-            if len(chart_available) > 1:
-                chart_identified = None
-                BuildUtils.logger.warning(f"{self.chart_id}: Multiple dependency-charts found!")
-                for external_project in BuildUtils.external_source_dirs:
-                    for dep_chart in chart_available:
-                        BuildUtils.logger.warning(f"{self.chart_id}: {dep_chart.chartfile}")
-                        if external_project in self.chart_dir and external_project in dep_chart.chart_dir or \
-                                BuildUtils.kaapana_dir in self.chart_dir and BuildUtils.kaapana_dir in dep_chart.chart_dir:
-                            if chart_identified == None:
-                                chart_identified = dep_chart
-                            else:
-                                chart_identified = False
+            BuildUtils.logger.error(f"The correct dependency could not be identified! -> found:")
+            for chart_found in charts_found:
+                BuildUtils.logger.error(f"{chart_found.chart_id}: {chart_found.chartfile}")
 
-                if chart_identified != False and chart_identified != None:
-                    BuildUtils.logger.debug(f"{self.chart_id}: Identified dependency:")
-                    BuildUtils.logger.debug(f"{self.chart_id}: {self.chart_dir} and")
-                    BuildUtils.logger.debug(f"{self.chart_id}: {chart_identified.chart_dir}!")
-                    BuildUtils.logger.warning(f"{self.chart_id}: -> using {chart_identified.chart_dir} as dependency..")
-                    self.dependencies[chart_identified.chart_id] = chart_identified
-                else:
-                    BuildUtils.logger.error(f"The right dependency could not be identified! -> found:")
-                    for dep_found in chart_available:
-                        BuildUtils.logger.error(f"{dep_found.chart_id}: {dep_found.chartfile}")
-
-                    BuildUtils.generate_issue(
-                        component=suite_tag,
-                        name=f"{self.chart_id}",
-                        msg=f"check_dependencies failed! {dependency_name}: multiple charts found!",
-                        level="ERROR"
+            if len(charts_found) > 1:
+                BuildUtils.generate_issue(
+                    component=suite_tag,
+                    name=f"{self.chart_id}",
+                    msg=f"check_dependencies failed! {dependency_name}: multiple charts found!",
+                    level="ERROR"
                     )
-            elif len(chart_available) == 0:
+            elif len(charts_found) == 0:
                 BuildUtils.logger.error(f"{self.chart_id}: check_dependencies failed! {dependency_name} -> not found!")
 
-                chart_available = [x for x in BuildUtils.charts_available if f"{x.name}-{x.repo_version}" == f"{dependency_name}-{BuildUtils.platform_build_version}"]
-                if len(chart_available) == 1:
-                    found_in_submodule = True
-                    dep_chart = chart_available[0]
-                    self.dependencies[dep_chart.chart_id] = dep_chart
-                    BuildUtils.logger.debug(f"{self.chart_id}: dependency found: {dep_chart.chart_id}")
-                else:
-                    BuildUtils.generate_issue(
-                        component=suite_tag,
-                        name=f"{self.chart_id}",
-                        msg=f"check_dependencies failed! Dependency {dependency_name} not found!",
-                        level="ERROR"
-                    )
+                BuildUtils.generate_issue(
+                    component=suite_tag,
+                    name=f"{self.chart_id}",
+                    msg=f"check_dependencies failed! Dependency {dependency_name} not found!",
+                    level="ERROR"
+                )
 
     def check_dependencies(self):
         if self.kaapana_type == "platform":
@@ -480,8 +461,9 @@ class HelmChart:
                     path=self.chart_dir
                 )
 
-    def add_container_by_tag(self, container_tag):
-        containers_found = [x for x in BuildUtils.container_images_available if x.tag == container_tag]
+    def add_container_by_tag(self, container_registry,container_name,container_version):
+        containers_found = [x for x in BuildUtils.container_images_available if x.image_name == container_name and x.registry == container_registry]
+
         if len(containers_found) == 1:
             container_found = containers_found[0]
             BuildUtils.logger.debug(f"{self.chart_id}: container found: {container_found.tag}")
@@ -527,7 +509,7 @@ class HelmChart:
         BuildUtils.logger.debug(f"{self.chart_id}: check_container_use")
 
         if self.kaapana_type == "extenstion-collection":
-            self.add_container_by_tag(container_tag=f"{BuildUtils.default_registry}/{self.name}:{self.repo_version}")
+            self.add_container_by_tag(container_registry=BuildUtils.default_registry,container_name=self.name,container_version=self.repo_version)
 
         elif self.values_yaml != None:  # if self.kaapana_type == "kaapanaworkflow":
             if "global" in self.values_yaml and self.values_yaml["global"] is not None and "image" in self.values_yaml["global"] and self.values_yaml["global"]["image"] != None:
@@ -543,7 +525,7 @@ class HelmChart:
                 assert container_image != None
 
                 container_tag = f"{BuildUtils.default_registry}/{container_image}:{container_version}"
-                self.add_container_by_tag(container_tag=container_tag)
+                self.add_container_by_tag(container_registry=BuildUtils.default_registry,container_name=container_image,container_version=container_version)
 
         template_dirs = (f"{self.chart_dir}/templates/*.yaml", f"{self.chart_dir}/crds/*.yaml")  # the tuple of file types
         files_grabbed = []
@@ -605,7 +587,12 @@ class HelmChart:
                                     level="ERROR",
                                     path=self.chart_dir
                                 )
-                            self.add_container_by_tag(container_tag=container_tag)
+                            
+                            assert len(container_tag.split("/")) == 4 and len(container_tag.split(":")) == 2
+                            container_version = container_tag.split(":")[-1]
+                            container_name = container_tag.split(":")[0].split("/")[-1]
+                            default_registry = "/".join(container_tag.split("/")[:3])
+                            self.add_container_by_tag(container_registry=default_registry,container_name=container_name,container_version=container_version)
 
     def lint_chart(self, build_version=False):
         if self.helmlint_done:
