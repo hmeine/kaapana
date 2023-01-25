@@ -64,7 +64,7 @@ def generate_deployment_script(platform_chart):
         for collection_name, collection_chart in platform_chart.kaapana_collections.items():
             platform_params["kaapana_collections"].append({
                 "name":  collection_chart.name,
-                "version":   collection_chart.build_version
+                "version":   BuildUtils.platform_build_version
             })
 
     platform_params["preinstall_extensions"] = []
@@ -72,7 +72,7 @@ def generate_deployment_script(platform_chart):
         for preinstall_extension_name, preinstall_extension_chart in platform_chart.preinstall_extensions.items():
             platform_params["preinstall_extensions"].append({
                 "name":  preinstall_extension_chart.name,
-                "version":   preinstall_extension_chart.build_version
+                "version":   BuildUtils.platform_build_version
             })
 
     template = env.get_template('deploy_platform_template.sh')  # load template file
