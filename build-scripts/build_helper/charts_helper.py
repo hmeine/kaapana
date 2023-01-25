@@ -3,6 +3,7 @@ from glob import glob
 import shutil
 import yaml
 import os
+from datetime import datetime
 from treelib import Tree
 from subprocess import PIPE, run
 from os.path import join, dirname, basename, exists, isfile, isdir
@@ -12,7 +13,6 @@ from build_helper.build_utils import BuildUtils
 from build_helper.container_helper import Container, pull_container_image
 from jinja2 import Environment, FileSystemLoader
 from multiprocessing.pool import ThreadPool
-
 import networkx as nx
 
 suite_tag = "Charts"
@@ -52,7 +52,7 @@ def generate_deployment_script(platform_chart):
     platform_params["platform_build_version"] = BuildUtils.platform_build_version
     platform_params["platform_build_branch"] = BuildUtils.platform_build_branch
     platform_params["platform_last_commit_timestamp"] = BuildUtils.platform_last_commit_timestamp
-
+    platform_params["platform_build_timestamp"] = datetime.now().strftime("%d-%m-%Y")
     platform_params["container_registry_url"] = BuildUtils.default_registry
     if BuildUtils.include_credentials:
         platform_params["container_registry_username"] = BuildUtils.registry_user
