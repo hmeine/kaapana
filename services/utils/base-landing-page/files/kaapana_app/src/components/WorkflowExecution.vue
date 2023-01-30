@@ -20,8 +20,7 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                 <template v-slot:label>
                   <div>Do you want to run your workflow in <strong>Isolation ?</strong></div> 
                   //-v-icon mdi-information
-              v-col(v-if="instance_names.length && radio_wf_type!=='bash' && radio_wf_type!=='docker' " cols='12')
-                v-select(v-model='dag_id' :items='available_dags' label='Choose Minio Bucket' chips='' hint='Select a Bucket') 
+              
                 </template>
                 <v-radio value="No">
                   <template v-slot:label>
@@ -57,9 +56,12 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                </v-radio>
              </v-radio-group>
             v-col(v-if="radio_wf_type =='bash'" cols='12')
+              v-select(v-model='bucket_id' :items='available_minio_buckets' label='Minio Buckets' chips='' hint='Select the Minio Bucket')
+            v-col(v-if="radio_wf_type =='bash'" cols='12')
               v-text-field(v-model='bash_url' label='Enter URL to download bash and supporting scripts (.zip format)' required='')
             v-col(v-if="radio_wf_type =='bash'" cols='12')
               v-text-field(v-model='bash_cmd' label='Enter your bash command' required='')
+            
             v-col(v-if="radio_wf_type=='docker'" cols='12')
               v-text-field(v-model='docker_registry' label='Enter docker registry' required='')
               v-text-field(v-model='docker_uname' label='Enter docker registry username' required='')
@@ -136,6 +138,7 @@ export default {
     external_available_instance_names: [],
     experiment_name: null,
     dag_id: null,
+    bucket_id: null,
     showConfData: false,
     federated_data: false,
     remote_data:false,
@@ -299,8 +302,14 @@ export default {
       kaapanaApiService
         .minioApiget("/buckets")
         .then((response) => {
-          this.available_minio_buckets = JSON.stringify(response.data);
+          // this.available_minio_buckets = JSON.stringify(response.data);
+          this.response = response.data
           console.log("Available Buckets !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: ", this.available_minio_buckets)
+          const keyName = 'name';
+          this.available_minio_buckets = this.response.map(item => item[keyName]);
+          console.log("values §§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§ ", this.available_minio_buckets)
+
+        
         })
         .catch((err) => {
           console.log(err);
