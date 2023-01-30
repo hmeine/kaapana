@@ -342,6 +342,7 @@ export default {
             radio_wf_type: this.radio_wf_type,
             bash_url: this.bash_url,
             bash_cmd: this.bash_cmd,
+            bucket_id: this.bucket_id,
             docker_registry: this.docker_registry,
             docker_uname: this.docker_uname,
             docker_pwd: this.docker_pwd         
