@@ -56,7 +56,7 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                </v-radio>
              </v-radio-group>
             v-col(v-if="radio_wf_type =='bash'" cols='12')
-              v-select(v-model='bucket_id' :items='available_minio_buckets' label='Minio Buckets' chips='' hint='Select the Minio Bucket')
+              v-select(v-model='bucket_id' :items='available_minio_buckets' label='Minio Buckets' chips='')
             v-col(v-if="radio_wf_type =='bash'" cols='12')
               v-text-field(v-model='bash_url' label='Enter URL to download bash and supporting scripts (.zip format)' required='')
             v-col(v-if="radio_wf_type =='bash'" cols='12')
@@ -101,6 +101,7 @@ v-dialog(v-model='dialogOpen' max-width='600px')
                 pre.text-left Workflow Type: {{radio_wf_type}}
                 pre.text-left Bash Url: {{bash_url}}
                 pre.text-left Bash Cmd: {{bash_cmd}}
+                pre.text-left Bucket ID: {{bucket_id}}
                 pre.text-left Docker Registry: {{docker_registry}}
                 pre.text-left Docker Uname: {{docker_uname}}
                 pre.text-left Docker Pwd: {{docker_pwd}}
