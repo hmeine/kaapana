@@ -7,7 +7,7 @@
           v-layout(row='', wrap='')
             v-flex(xs12, py-1)
               div(style={'margin': '9px', 'margin-top': '10px'})
-                img(src='../../assets/img/kaapana.png', alt='Vuetify', width='35%')
+                img(src='../../assets/img/aihealth.png', alt='Vuetify', width='75%')
     v-flex.text-xs-left(sm4 d-flex)
       v-card.kaapana-opacity-card(width='100%')
         v-card-text.text-xs-left
@@ -17,7 +17,7 @@
             v-flex(xs12, py-1)
               v-icon mdi-email
               |&nbsp;
-              a(href="mailto:kaapana@dkfz-heidelberg.de?subject=kaapana%20Support%20Question") kaapana@dkfz-heidelberg.de
+              a(href="https://aihcluster.slack.com/archives/C03P03WGJSJ") cc-software
 </template>
 
 <script>
