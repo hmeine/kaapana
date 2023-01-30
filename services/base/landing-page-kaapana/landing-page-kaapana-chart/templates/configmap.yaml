@@ -3,9 +3,9 @@ apiVersion: v1
 data:
   commonData.json: |-
     {
-      "name": "Kaapana platform",
-      "shortName": "Kaapana",
-      "infoText": "Welcome to Kaapana",
+      "name": "AIH Cluster Platform",
+      "shortName": "AIHplatform",
+      "infoText": "Welcome to AIH Cluster Platform",
       "version": "{{ .Values.global.release_name }}:{{ .Values.global.kaapana_build_version }} | Build-Timestamp: {{ .Values.global.build_timestamp }} | Build-Branch: {{ .Values.global.platform_build_branch }} - {{ .Values.global.platform_last_commit_timestamp }}"
     }
   defaultExternalWebpages.json: |-
