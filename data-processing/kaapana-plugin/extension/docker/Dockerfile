@@ -16,7 +16,8 @@ COPY files/dags/dag_tag_dataset.py /tmp/dags/
 COPY files/dags/dag_tag_seg_ct_tuples.py /tmp/dags/
 COPY files/dags/dag_tag_train_test_split_dataset.py /tmp/dags/
 COPY files/dags/dag_service_extract_metadata_trigger_rule.json /tmp/dags/
-COPY files/dags/dag_service_daily_cleanup_jobs.py /tmp/dags
+COPY files/dags/dag_service_daily_cleanup_jobs.py /tmp/dags/
+COPY files/dags/dag_convert_itk_to_dcm.py /tmp/dags/
 
 
 COPY files/plugin/ /tmp/plugins
