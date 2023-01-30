@@ -1,14 +1,14 @@
-FROM ubuntu:20.04
+FROM local-only/base-python-cpu:latest
 
 LABEL IMAGE="otsus-method"
 LABEL VERSION="0.1.0"
 LABEL CI_IGNORE="True"
 
-RUN apt update
-RUN apt install -y python3 python3-pip
+WORKDIR /app
 
-RUN python3 -m pip install SimpleITK
+COPY files/requirements.txt /app/
+RUN python -m pip install --no-cache-dir -r /app/requirements.txt
 
-COPY files/ /
+COPY files/* /app/
 
-CMD ["python3","-u","otsus_method.py"]
+CMD ["python3","-u","/app/otsus_method.py"]
